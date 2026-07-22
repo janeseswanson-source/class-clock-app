@@ -51,6 +51,14 @@ export function DisplayHeader({ subjectTitle, dateLabel }: DisplayHeaderProps) {
         >
           <Settings className="w-5 h-5" />
         </Link>
+        <button
+          type="button"
+          onClick={handleSignOut}
+          aria-label="Sign out"
+          className="p-2 rounded-full text-navy/60 hover:text-navy hover:bg-muted transition-colors"
+        >
+          <LogOut className="w-5 h-5" />
+        </button>
       </div>
     </div>
   );
