@@ -24,7 +24,13 @@ function timeRange(p: SchedulePeriod) {
   return `${formatTime(p.startTime)} – ${formatTime(p.endTime)}`;
 }
 
-export function ClassCard({ period, variant }: ClassCardProps) {
+export function ClassCard({
+  period,
+  variant,
+  behaviorScore = null,
+  onScoreChange,
+  showBehaviorRow = false,
+}: ClassCardProps) {
   if (variant === "recess") {
     return (
       <div className="rounded-xl border-2 border-gold bg-gold-soft/60 px-5 py-3">

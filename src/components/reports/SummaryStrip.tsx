@@ -7,9 +7,9 @@ interface SummaryStripProps {
 
 export function SummaryStrip({ sessions, periodsById }: SummaryStripProps) {
   const total = sessions.length;
-  const scores = sessions
+  const scores: number[] = sessions
     .map((s) => s.behaviorScore)
-    .filter((n): n is number => typeof n === "number");
+    .filter((n): n is NonNullable<typeof n> => n != null);
   const avg = scores.length ? scores.reduce((a, b) => a + b, 0) / scores.length : 0;
 
   const byGrade = new Map<string, number[]>();
