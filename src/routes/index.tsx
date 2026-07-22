@@ -46,7 +46,9 @@ function formatDateLabel(d: Date) {
 
 function Index() {
   const { config, isLoaded } = useConfig();
+  const { sessions, upsert } = useSessions();
   const now = useNow(250);
+  const dateISO = todayISO(now);
 
   const todayDow = now.getDay(); // 0-6
   const todaysPeriods = useMemo(() => {
@@ -89,10 +91,24 @@ function Index() {
     const currId = currentPeriod?.id ?? null;
     if (prevId && prevId !== currId) {
       endedAtRef.current = { id: prevId, at: now.getTime() };
-      playAlarm(ALARM_AUTO_OFF_SEC);
+      playAlarm(ALARM_AUTO_OFF_SEC, settings?.alarmStyle);
     }
     prevCurrentIdRef.current = currId;
-  }, [currentPeriod, now, ALARM_AUTO_OFF_SEC]);
+  }, [currentPeriod, now, ALARM_AUTO_OFF_SEC, settings?.alarmStyle]);
+
+  const currentScore = useMemo(() => {
+    if (!currentPeriod) return null;
+    return (
+      sessions[dateISO]?.find((s) => s.schedulePeriodId === currentPeriod.id)
+        ?.behaviorScore ?? null
+    );
+  }, [sessions, dateISO, currentPeriod]);
+
+  const handleScore = (score: BehaviorScore) => {
+    if (!currentPeriod) return;
+    upsert(dateISO, currentPeriod.id, score);
+  };
+
 
   if (!isLoaded) {
     return (
