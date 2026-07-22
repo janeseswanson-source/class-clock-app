@@ -8,7 +8,7 @@ import { ScheduleBuilder } from "@/components/setup/ScheduleBuilder";
 import { WeekPreview } from "@/components/setup/WeekPreview";
 import { useConfig } from "@/hooks/useConfig";
 import { useSessions } from "@/hooks/useSessions";
-import { DEFAULT_SETTINGS, clearConfig } from "@/lib/config-store";
+import { DEFAULT_SETTINGS } from "@/lib/config-store";
 import { downloadBlob, toCSV } from "@/lib/csv";
 import type { SchedulePeriod, TimerInstance, TimerSettings } from "@/lib/types";
 
@@ -26,8 +26,10 @@ export const Route = createFileRoute("/_authenticated/settings")({
 
 function SettingsPage() {
   const navigate = useNavigate();
-  const { config, isLoaded, save } = useConfig();
-  const { sessions, clearAll } = useSessions();
+  const { config, isLoaded, save, clear } = useConfig();
+  const { clearAll } = useSessions();
+  // sessions currently retrieved through server clear; export uses session hook
+  const { sessions } = useSessions();
 
   const [draft, setDraft] = useState<{
     instance: TimerInstance;
@@ -79,10 +81,9 @@ function SettingsPage() {
     downloadBlob(`behavior-all.csv`, toCSV(rows));
   };
 
-  const resetApp = () => {
+  const resetApp = async () => {
     if (!window.confirm("Reset the entire app? Your schedule, settings, and behavior data will all be erased.")) return;
-    clearAll();
-    clearConfig();
+    await clear();
     navigate({ to: "/setup" });
   };
 
