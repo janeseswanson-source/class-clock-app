@@ -212,7 +212,7 @@ function Index() {
               </div>
 
               <div className="mt-6">
-                <ReportFooter />
+                <ReportFooter schedule={config.schedule} todaySessions={sessions[dateISO] ?? []} />
               </div>
             </div>
           </div>
