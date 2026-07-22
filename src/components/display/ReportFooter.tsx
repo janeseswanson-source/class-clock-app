@@ -2,11 +2,11 @@ import { FileDown, BarChart3 } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 import { downloadBlob, toCSV } from "@/lib/csv";
 import { todayISO } from "@/lib/session-store";
-import type { SchedulePeriod, SessionRecord } from "@/lib/types";
+import type { SchedulePeriod, ClassSession } from "@/lib/types";
 
 interface ReportFooterProps {
   schedule: SchedulePeriod[];
-  todaySessions: SessionRecord[];
+  todaySessions: ClassSession[];
 }
 
 export function ReportFooter({ schedule, todaySessions }: ReportFooterProps) {
