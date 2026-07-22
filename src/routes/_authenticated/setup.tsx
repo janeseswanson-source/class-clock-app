@@ -58,8 +58,8 @@ function SetupWizard() {
   const scheduleValid = schedule.length > 0 &&
     schedule.every((p) => p.endTime > p.startTime);
 
-  const handleSave = () => {
-    save({
+  const handleSave = async () => {
+    await save({
       instance: makeInstance(subjectTitle, teacherName, method),
       schedule,
       settings: config?.settings ?? DEFAULT_SETTINGS,
