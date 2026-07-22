@@ -1,4 +1,5 @@
 import { Settings } from "lucide-react";
+import { Link } from "@tanstack/react-router";
 
 interface DisplayHeaderProps {
   subjectTitle: string;
@@ -33,13 +34,13 @@ export function DisplayHeader({ subjectTitle, dateLabel }: DisplayHeaderProps) {
           </h1>
           <div className="text-sm text-navy/60 mt-1">{dateLabel}</div>
         </div>
-        <button
-          type="button"
+        <Link
+          to="/setup"
           aria-label="Settings"
           className="p-2 rounded-full text-navy/60 hover:text-navy hover:bg-muted transition-colors"
         >
           <Settings className="w-5 h-5" />
-        </button>
+        </Link>
       </div>
     </div>
   );
