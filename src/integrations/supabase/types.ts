@@ -14,7 +14,81 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      profiles: {
+        Row: {
+          configured: boolean
+          created_at: string
+          id: string
+          schedule: Json
+          settings: Json
+          setup_method: string
+          subject_title: string
+          teacher_name: string
+          updated_at: string
+        }
+        Insert: {
+          configured?: boolean
+          created_at?: string
+          id: string
+          schedule?: Json
+          settings?: Json
+          setup_method?: string
+          subject_title?: string
+          teacher_name?: string
+          updated_at?: string
+        }
+        Update: {
+          configured?: boolean
+          created_at?: string
+          id?: string
+          schedule?: Json
+          settings?: Json
+          setup_method?: string
+          subject_title?: string
+          teacher_name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      sessions: {
+        Row: {
+          behavior_score: number
+          created_at: string
+          date: string
+          edited: boolean
+          id: string
+          owner_id: string
+          rating_label: string | null
+          schedule_period_id: string
+          score_logged_at: string
+          updated_at: string
+        }
+        Insert: {
+          behavior_score: number
+          created_at?: string
+          date: string
+          edited?: boolean
+          id?: string
+          owner_id: string
+          rating_label?: string | null
+          schedule_period_id: string
+          score_logged_at?: string
+          updated_at?: string
+        }
+        Update: {
+          behavior_score?: number
+          created_at?: string
+          date?: string
+          edited?: boolean
+          id?: string
+          owner_id?: string
+          rating_label?: string | null
+          schedule_period_id?: string
+          score_logged_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
