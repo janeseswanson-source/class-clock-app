@@ -8,6 +8,7 @@ import { ReportFooter } from "@/components/display/ReportFooter";
 import { TimeScrubber } from "@/components/dev/TimeScrubber";
 import { useNow } from "@/hooks/useNow";
 import { useConfig } from "@/hooks/useConfig";
+import { useSessions } from "@/hooks/useSessions";
 import {
   findCurrentPeriod,
   findNextPeriod,
@@ -16,6 +17,8 @@ import {
   remainingMs,
 } from "@/lib/time";
 import { playAlarm } from "@/lib/alarm";
+import { todayISO } from "@/lib/session-store";
+import type { BehaviorScore } from "@/lib/types";
 
 export const Route = createFileRoute("/")({
   head: () => ({
