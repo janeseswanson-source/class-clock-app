@@ -1,95 +1,99 @@
 
-# Phase 3 — Setup Wizard
+# Phase 4 — Settings & Behavior Reports
 
-Goal: replace hard-coded mock data with a real, user-entered configuration captured through a multi-step wizard on first launch, stored locally (backend comes in Phase 5).
+Goal: make the wall display fully operable day-to-day — behavior scores persist per class session, the report footer exports real data, and a Settings page lets the teacher tune the timer without re-running the wizard.
 
 ## Flow
 
 ```text
-/setup
- ├─ Step 1  Welcome / your details        (subjectTitle, teacherName)
- ├─ Step 2  Choose setup method           (manual | scheduler_ops)
- ├─ Step 3a Manual schedule builder       (per weekday period list)
- ├─ Step 3b Scheduler Ops import stub     (paste/upload → parsed preview)
- ├─ Step 4  Review & confirm              (weekly grid preview)
- └─ Done → redirect to "/"
+/                  wall display (unchanged shell, now writes/reads sessions + settings)
+/settings          tabbed settings page
+   ├─ General      alarm style, auto-off, transition windows, behavior scoring toggle
+   ├─ Schedule     jump into the same weekly editor from Phase 3
+   ├─ Profile      subject title + teacher name
+   └─ Data         export all / clear behavior data / reset app
+/reports           behavior report browser (date range + per-class detail)
 ```
 
-The wall display (`/`) checks for a saved config on mount. If none exists, it redirects to `/setup`. Otherwise it renders using the stored schedule + settings instead of `mock-schedule.ts`.
+Gear icon in `DisplayHeader` now goes to `/settings` (was `/setup`). The wizard at `/setup` is used only for first-run and full re-setup from Data tab.
 
-## Routes
+## Persistence
 
-- `src/routes/setup.tsx` — wizard layout route with `<Outlet />`, step indicator, Back/Next chrome.
-- `src/routes/setup.index.tsx` → Step 1 (details).
-- `src/routes/setup.method.tsx` → Step 2.
-- `src/routes/setup.manual.tsx` → Step 3a schedule builder.
-- `src/routes/setup.import.tsx` → Step 3b Scheduler Ops (stub; accepts pasted JSON/CSV and shows preview — real parser is future work).
-- `src/routes/setup.review.tsx` → Step 4 confirm + save.
-- `src/routes/index.tsx` — updated to consume saved config and redirect when missing.
+Extend `config-store.ts` with a second localStorage slice for behavior sessions so the config blob stays small.
 
-Each route gets its own `head()` metadata.
+- `nst.sessions.v1` → `Record<string /* YYYY-MM-DD */, ClassSession[]>`
+- `session-store.ts` exposes `loadSessions()`, `upsertSession()`, `getSession(date, periodId)`, `clearSessions()`, `exportSessionsCSV()`.
+- New `useSessions()` hook mirrors `useConfig()` (storage-event sync).
 
-## State & persistence
+`ClassSession` (already in `types.ts`) gains a small runtime helper: score change updates `scoreLoggedAt`, sets `edited=true` when overwriting a prior score, stamps `ratingLabel` from `RATING_LABELS`.
 
-- `src/lib/config-store.ts` — typed localStorage adapter with:
-  - `loadConfig()` / `saveConfig()` / `clearConfig()`
-  - Shape: `{ instance: TimerInstance, schedule: SchedulePeriod[], settings: TimerSettings, version: 1 }`
-  - Default `TimerSettings` values (from `types.ts`).
-- `src/hooks/useConfig.ts` — React hook exposing `{ config, isLoaded, save, clear }` backed by the store; subscribes to `storage` events so all tabs stay in sync.
-- `src/lib/wizard-store.ts` — small in-memory (sessionStorage-backed) draft store for the wizard so partial progress survives step navigation and refresh but doesn't pollute production config until Step 4 confirms.
+## Wall display changes (`src/routes/index.tsx`)
 
-## Manual schedule builder (Step 3a)
+- Add `BehaviorScoreRow` for the current class period (already built, currently static). Wire onChange to `upsertSession` for `{ date: todayISO, schedulePeriodId: currentPeriod.id }`.
+- Read prior score for the current period on mount so refreshes preserve it.
+- Hide the row when `settings.behaviorScoringEnabled === false` or when current period is not `class`.
+- `ReportFooter` "Today" button → `/reports?range=today`; "This week" → `/reports?range=week`; "Export CSV" triggers today's CSV download directly.
 
-- Weekday tabs (Mon–Fri).
-- For each day, an ordered list of period rows with fields:
-  - Start / End time (time inputs)
-  - Type: `class | duty | recess`
-  - If `class`: grade (dropdown K–5), classroomTeacher (text), roomNumber (optional text)
-  - If `duty` / `recess`: dutyLabel (text, e.g. "Bus Duty")
-- Add / duplicate / delete row. Sort by startTime on blur.
-- Client-side validation: non-overlapping times, end > start, at least one period per active day.
-- "Copy from Monday" quick action for other weekdays.
+## Settings page (`src/routes/settings.tsx`)
 
-## Scheduler Ops import (Step 3b)
+Single route with in-page tabs (shadcn `Tabs`); each tab is a section, no sub-routes needed. Head metadata set on this route.
 
-Phase-3 stub only:
-- Textarea accepting pasted JSON matching `SchedulePeriod[]` (documented sample shown inline).
-- Optional `.csv` file input parsed client-side.
-- Parsed rows land in the same weekly grid preview as manual, editable before Step 4.
-- Full third-party integration deferred to Phase 5.
+### General tab
+- Alarm style: radio group (`chime | buzzer | bell | soft_tone`) with a "Preview" button that plays the sound via `alarm.ts` (extended to accept style).
+- Alarm auto-off: slider 2–15s.
+- Transition — same grade: slider 1–10 min.
+- Transition — grade change: slider 1–15 min.
+- Behavior scoring: switch on/off.
+- Sticky "Save changes" bar at bottom; unsaved-change indicator.
 
-## Review & save (Step 4)
+### Schedule tab
+Reuses `ScheduleBuilder` + `WeekPreview` from Phase 3. Saves back into `config.schedule`. "Re-run setup wizard" link at bottom.
 
-- Read-only weekly grid: 5 columns, each column lists periods with time + label + teacher.
-- Editable name/teacher summary at top with "Back to edit" links.
-- "Save & start timer" → writes to `config-store`, clears wizard draft, `router.navigate({ to: "/" })`.
+### Profile tab
+Reuses `DetailsForm`. Saves `instance.subjectTitle` / `instance.teacherName`.
 
-## Display integration
+### Data tab
+- "Export all behavior data (CSV)" → downloads a CSV of every stored session.
+- "Clear behavior data" → confirm dialog, then wipes `nst.sessions.v1`.
+- "Reset entire app" → confirm dialog, wipes config + sessions, navigates to `/setup`.
 
-- `src/routes/index.tsx`:
-  - Uses `useConfig()`; if not loaded → spinner; if empty → `<Navigate to="/setup" />`.
-  - Passes `config.schedule` into the existing Phase-2 period logic (currently reads `mock-schedule.ts`; extract that read to a single source so we swap it in one place).
-- `src/lib/mock-schedule.ts` stays as fallback used only in Storybook-style dev preview (not referenced by `/` anymore).
-- `DisplayHeader` shows `config.instance.subjectTitle` and `config.instance.teacherName` from real data.
+## Reports page (`src/routes/reports.tsx`)
 
-## Components (new, under `src/components/setup/`)
+- Range chips: Today · This week · This month · Custom (two date inputs).
+- Summary strip: total classes, average score, best/worst grade.
+- Table of sessions grouped by day: time, grade, teacher, score chip (color-coded 1–5), rating label, edited badge, "Edit" opens a small popover to change score.
+- "Export CSV" button uses the same range filter.
+- Empty state with link back to `/`.
 
-- `WizardShell.tsx` — step indicator, Back/Next buttons, progress dots styled with navy/gold tokens.
-- `DetailsForm.tsx`, `MethodPicker.tsx` (two large cards Manual vs Scheduler Ops), `ScheduleDayEditor.tsx`, `PeriodRow.tsx`, `ImportPanel.tsx`, `WeekPreview.tsx`.
-- All styled via existing design tokens; no hardcoded colors.
+CSV format:
+`date,day,startTime,endTime,grade,classroomTeacher,room,score,ratingLabel,scoreLoggedAt,edited`
 
-## Out of scope for Phase 3
+## New components (`src/components/settings/`, `src/components/reports/`)
 
-- Editing config after initial save (Phase 4 Settings).
-- Behavior report persistence (Phase 4).
-- Real Scheduler Ops API (Phase 5).
-- Auth / cloud sync (Phase 5).
+- `settings/GeneralTab.tsx`, `SettingsShell.tsx` (page chrome + tabs).
+- `reports/RangeFilter.tsx`, `SessionsTable.tsx`, `ScoreChip.tsx`, `SummaryStrip.tsx`.
+- `lib/csv.ts` — small CSV writer + `downloadBlob()` helper.
+- `lib/date-ranges.ts` — today/week/month range helpers.
+
+## Small helpers touched
+
+- `lib/alarm.ts`: accept `AlarmStyle` and vary the tone (different frequencies/wave shapes per style). Keep API backwards compatible; default to current chime.
+- `components/display/BehaviorScoreRow.tsx`: add `value` + `onChange` props if not already wired.
+- `components/display/ReportFooter.tsx`: use `Link` + trigger CSV download for today.
+- `components/display/DisplayHeader.tsx`: gear link now points to `/settings`.
+
+## Out of scope for Phase 4
+
+- Cloud sync / auth / cross-device history — Phase 5.
+- PDF export (CSV only for now).
+- Historical schedule edits (changing schedule doesn't rewrite past sessions; they keep their original grade/teacher snapshot copied at write time — planned once backend lands).
 
 ## Acceptance
 
-1. Fresh load with empty storage → redirected to `/setup` Step 1.
-2. Completing the manual path saves a full weekly schedule and returns to `/` showing today's real periods driven by Phase-2 logic.
-3. Reloading `/` after save skips the wizard.
-4. `localStorage.clear()` + reload returns to the wizard.
-5. Scheduler Ops path accepts a pasted JSON sample and produces the same reviewable grid.
+1. Tapping a behavior score during a class survives a page refresh and appears on `/reports`.
+2. `/settings → General` changes take effect on the wall display without reload (alarm length, transition windows, behavior row visibility).
+3. Alarm preview plays each of the four styles distinctly.
+4. `/reports` filters by Today / Week / Month / Custom and matches the CSV export.
+5. Data tab's "Reset entire app" returns to `/setup` with empty storage.
+6. Gear icon on `/` now opens Settings, not the wizard.
 
