@@ -28,8 +28,8 @@ export const getMyConfig = createServerFn({ method: "GET" })
         teacherName: data.teacher_name,
         setupMethod: (data.setup_method as SetupMethod) ?? "manual",
       },
-      schedule: (data.schedule as SchedulePeriod[]) ?? [],
-      settings: data.settings as TimerSettings,
+      schedule: (data.schedule as unknown as SchedulePeriod[]) ?? [],
+      settings: data.settings as unknown as TimerSettings,
     };
   });
 
