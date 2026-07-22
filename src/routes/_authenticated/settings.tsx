@@ -12,7 +12,7 @@ import { DEFAULT_SETTINGS, clearConfig } from "@/lib/config-store";
 import { downloadBlob, toCSV } from "@/lib/csv";
 import type { SchedulePeriod, TimerInstance, TimerSettings } from "@/lib/types";
 
-export const Route = createFileRoute("/settings")({
+export const Route = createFileRoute("/_authenticated/settings")({
   head: () => ({
     meta: [
       { title: "Settings — Next Specials Timer" },

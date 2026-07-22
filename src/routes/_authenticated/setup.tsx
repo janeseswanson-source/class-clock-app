@@ -10,7 +10,7 @@ import { useConfig } from "@/hooks/useConfig";
 import { DEFAULT_SETTINGS } from "@/lib/config-store";
 import type { SchedulePeriod, SetupMethod, TimerInstance } from "@/lib/types";
 
-export const Route = createFileRoute("/setup")({
+export const Route = createFileRoute("/_authenticated/setup")({
   head: () => ({
     meta: [
       { title: "Setup — Next Specials Timer" },
