@@ -20,7 +20,7 @@ import { playAlarm } from "@/lib/alarm";
 import { todayISO } from "@/lib/session-store";
 import type { BehaviorScore } from "@/lib/types";
 
-export const Route = createFileRoute("/")({
+export const Route = createFileRoute("/_authenticated/")({
   head: () => ({
     meta: [
       { title: "Next Specials Timer" },
@@ -212,7 +212,7 @@ function Index() {
               </div>
 
               <div className="mt-6">
-                <ReportFooter />
+                <ReportFooter schedule={config.schedule} todaySessions={sessions[dateISO] ?? []} />
               </div>
             </div>
           </div>

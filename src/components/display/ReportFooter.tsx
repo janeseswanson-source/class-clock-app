@@ -1,32 +1,35 @@
 import { FileDown, BarChart3 } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 import { downloadBlob, toCSV } from "@/lib/csv";
-import { loadSessions, todayISO } from "@/lib/session-store";
-import { loadConfig } from "@/lib/config-store";
+import { todayISO } from "@/lib/session-store";
+import type { SchedulePeriod, ClassSession } from "@/lib/types";
 
-function exportTodayCSV() {
-  const date = todayISO();
-  const sessions = loadSessions()[date] ?? [];
-  const config = loadConfig();
-  const rows = sessions.map((s) => {
-    const p = config?.schedule.find((sp) => sp.id === s.schedulePeriodId);
-    return {
-      date: s.date,
-      startTime: p?.startTime ?? "",
-      endTime: p?.endTime ?? "",
-      grade: p?.grade ?? "",
-      classroomTeacher: p?.classroomTeacher ?? "",
-      room: p?.roomNumber ?? "",
-      score: s.behaviorScore,
-      ratingLabel: s.ratingLabel,
-      scoreLoggedAt: s.scoreLoggedAt,
-      edited: s.edited,
-    };
-  });
-  downloadBlob(`behavior-${date}.csv`, toCSV(rows));
+interface ReportFooterProps {
+  schedule: SchedulePeriod[];
+  todaySessions: ClassSession[];
 }
 
-export function ReportFooter() {
+export function ReportFooter({ schedule, todaySessions }: ReportFooterProps) {
+  function exportTodayCSV() {
+    const date = todayISO();
+    const rows = todaySessions.map((s) => {
+      const p = schedule.find((sp) => sp.id === s.schedulePeriodId);
+      return {
+        date: s.date,
+        startTime: p?.startTime ?? "",
+        endTime: p?.endTime ?? "",
+        grade: p?.grade ?? "",
+        classroomTeacher: p?.classroomTeacher ?? "",
+        room: p?.roomNumber ?? "",
+        score: s.behaviorScore,
+        ratingLabel: s.ratingLabel,
+        scoreLoggedAt: s.scoreLoggedAt,
+        edited: s.edited,
+      };
+    });
+    downloadBlob(`behavior-${date}.csv`, toCSV(rows));
+  }
+
   return (
     <div className="flex items-center justify-between pt-4 border-t border-border">
       <div>

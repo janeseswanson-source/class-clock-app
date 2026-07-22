@@ -1,5 +1,7 @@
-import { Settings } from "lucide-react";
-import { Link } from "@tanstack/react-router";
+import { Settings, LogOut } from "lucide-react";
+import { Link, useNavigate } from "@tanstack/react-router";
+import { useQueryClient } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 
 interface DisplayHeaderProps {
   subjectTitle: string;
@@ -7,6 +9,14 @@ interface DisplayHeaderProps {
 }
 
 export function DisplayHeader({ subjectTitle, dateLabel }: DisplayHeaderProps) {
+  const navigate = useNavigate();
+  const qc = useQueryClient();
+  const handleSignOut = async () => {
+    await qc.cancelQueries();
+    qc.clear();
+    await supabase.auth.signOut();
+    navigate({ to: "/auth", replace: true });
+  };
   return (
     <div className="flex items-start justify-between">
       <div className="flex items-center gap-2">
@@ -41,6 +51,14 @@ export function DisplayHeader({ subjectTitle, dateLabel }: DisplayHeaderProps) {
         >
           <Settings className="w-5 h-5" />
         </Link>
+        <button
+          type="button"
+          onClick={handleSignOut}
+          aria-label="Sign out"
+          className="p-2 rounded-full text-navy/60 hover:text-navy hover:bg-muted transition-colors"
+        >
+          <LogOut className="w-5 h-5" />
+        </button>
       </div>
     </div>
   );

@@ -16,7 +16,7 @@ const searchSchema = z.object({
   range: z.enum(["today", "week", "month", "all", "custom"]).optional(),
 });
 
-export const Route = createFileRoute("/reports")({
+export const Route = createFileRoute("/_authenticated/reports")({
   validateSearch: (s) => searchSchema.parse(s),
   head: () => ({
     meta: [
