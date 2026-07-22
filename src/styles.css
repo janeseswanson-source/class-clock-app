@@ -80,7 +80,7 @@
   --surface: oklch(1 0 0);
   --past: oklch(0.75 0.01 260);
   --foreground: oklch(0.28 0.07 260);
-  --foreground: oklch(0.129 0.042 264.695);
+  
   --card: oklch(1 0 0);
   --card-foreground: oklch(0.129 0.042 264.695);
   --popover: oklch(1 0 0);
