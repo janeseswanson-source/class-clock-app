@@ -1,32 +1,32 @@
-import { useState } from "react";
 import { RATING_LABELS, type BehaviorScore } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
 interface BehaviorScoreRowProps {
-  initial?: BehaviorScore | null;
+  value?: BehaviorScore | null;
+  onChange?: (score: BehaviorScore) => void;
   disabled?: boolean;
   hint?: string;
 }
 
 export function BehaviorScoreRow({
-  initial = null,
+  value = null,
+  onChange,
   disabled = false,
   hint = "Tap to score this class",
 }: BehaviorScoreRowProps) {
-  const [score, setScore] = useState<BehaviorScore | null>(initial);
-  const label = score ? RATING_LABELS[score] : null;
+  const label = value ? RATING_LABELS[value] : null;
 
   return (
     <div>
       <div className="grid grid-cols-5 gap-2">
         {[1, 2, 3, 4, 5].map((n) => {
-          const selected = score === n;
+          const selected = value === n;
           return (
             <button
               key={n}
               type="button"
               disabled={disabled}
-              onClick={() => setScore(n as BehaviorScore)}
+              onClick={() => onChange?.(n as BehaviorScore)}
               className={cn(
                 "py-2 rounded-md text-sm font-semibold transition-colors",
                 selected
@@ -43,7 +43,7 @@ export function BehaviorScoreRow({
       <div className="mt-2 text-center text-xs font-semibold text-navy">
         {label ? (
           <span>
-            <span className="text-gold">{score}</span> {label}
+            <span className="text-gold">{value}</span> {label}
           </span>
         ) : (
           <span className="text-navy/50">{hint}</span>

@@ -35,7 +35,7 @@ export function DisplayHeader({ subjectTitle, dateLabel }: DisplayHeaderProps) {
           <div className="text-sm text-navy/60 mt-1">{dateLabel}</div>
         </div>
         <Link
-          to="/setup"
+          to="/settings"
           aria-label="Settings"
           className="p-2 rounded-full text-navy/60 hover:text-navy hover:bg-muted transition-colors"
         >

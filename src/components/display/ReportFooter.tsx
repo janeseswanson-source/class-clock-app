@@ -1,4 +1,30 @@
-import { FileText, FileDown } from "lucide-react";
+import { FileDown, BarChart3 } from "lucide-react";
+import { Link } from "@tanstack/react-router";
+import { downloadBlob, toCSV } from "@/lib/csv";
+import { loadSessions, todayISO } from "@/lib/session-store";
+import { loadConfig } from "@/lib/config-store";
+
+function exportTodayCSV() {
+  const date = todayISO();
+  const sessions = loadSessions()[date] ?? [];
+  const config = loadConfig();
+  const rows = sessions.map((s) => {
+    const p = config?.schedule.find((sp) => sp.id === s.schedulePeriodId);
+    return {
+      date: s.date,
+      startTime: p?.startTime ?? "",
+      endTime: p?.endTime ?? "",
+      grade: p?.grade ?? "",
+      classroomTeacher: p?.classroomTeacher ?? "",
+      room: p?.roomNumber ?? "",
+      score: s.behaviorScore,
+      ratingLabel: s.ratingLabel,
+      scoreLoggedAt: s.scoreLoggedAt,
+      edited: s.edited,
+    };
+  });
+  downloadBlob(`behavior-${date}.csv`, toCSV(rows));
+}
 
 export function ReportFooter() {
   return (
@@ -10,19 +36,21 @@ export function ReportFooter() {
         </div>
       </div>
       <div className="flex gap-2">
-        <button
-          type="button"
+        <Link
+          to="/reports"
+          search={{ range: "today" }}
           className="inline-flex items-center gap-2 rounded-md border border-border bg-white px-3 py-2 text-sm font-semibold text-navy hover:bg-muted transition-colors"
         >
-          <FileText className="w-4 h-4" />
-          Google Doc
-        </button>
+          <BarChart3 className="w-4 h-4" />
+          View reports
+        </Link>
         <button
           type="button"
+          onClick={exportTodayCSV}
           className="inline-flex items-center gap-2 rounded-md border border-border bg-white px-3 py-2 text-sm font-semibold text-navy hover:bg-muted transition-colors"
         >
           <FileDown className="w-4 h-4" />
-          PDF
+          Export CSV
         </button>
       </div>
     </div>

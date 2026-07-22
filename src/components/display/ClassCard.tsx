@@ -1,4 +1,4 @@
-import type { SchedulePeriod } from "@/lib/types";
+import type { BehaviorScore, SchedulePeriod } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { BehaviorScoreRow } from "./BehaviorScoreRow";
 
@@ -7,6 +7,9 @@ type Variant = "past" | "current" | "upcoming" | "recess" | "duty";
 interface ClassCardProps {
   period: SchedulePeriod;
   variant: Variant;
+  behaviorScore?: BehaviorScore | null;
+  onScoreChange?: (score: BehaviorScore) => void;
+  showBehaviorRow?: boolean;
 }
 
 function formatTime(t: string) {
@@ -21,7 +24,13 @@ function timeRange(p: SchedulePeriod) {
   return `${formatTime(p.startTime)} – ${formatTime(p.endTime)}`;
 }
 
-export function ClassCard({ period, variant }: ClassCardProps) {
+export function ClassCard({
+  period,
+  variant,
+  behaviorScore = null,
+  onScoreChange,
+  showBehaviorRow = false,
+}: ClassCardProps) {
   if (variant === "recess") {
     return (
       <div className="rounded-xl border-2 border-gold bg-gold-soft/60 px-5 py-3">
@@ -77,12 +86,14 @@ export function ClassCard({ period, variant }: ClassCardProps) {
         </div>
         <div className="text-sm text-navy/60 mt-0.5">{period.roomNumber}</div>
 
-        <div className="mt-3">
-          <BehaviorScoreRow
-            hint={isCurrent ? "Tap to score this class" : "Tap to score this class"}
-            initial={isCurrent && period.id === "p2" ? 5 : null}
-          />
-        </div>
+        {showBehaviorRow && isCurrent && period.periodType === "class" ? (
+          <div className="mt-3">
+            <BehaviorScoreRow
+              value={behaviorScore ?? null}
+              onChange={onScoreChange}
+            />
+          </div>
+        ) : null}
       </div>
     </div>
   );
