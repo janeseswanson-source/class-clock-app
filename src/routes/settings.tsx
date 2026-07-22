@@ -153,17 +153,17 @@ function SettingsPage() {
                   <DataRow
                     title="Export all behavior data"
                     desc="Downloads every recorded score as a CSV file."
-                    action={<button type="button" onClick={exportAllCSV} className="btn-primary">Export CSV</button>}
+                    action={<button type="button" onClick={exportAllCSV} className="rounded-full bg-navy text-white px-4 py-2 text-sm font-bold hover:bg-navy/90">Export CSV</button>}
                   />
                   <DataRow
                     title="Clear behavior data"
                     desc="Removes all stored scores. Your schedule and settings stay put."
-                    action={<button type="button" onClick={clearBehavior} className="btn-danger">Clear scores</button>}
+                    action={<button type="button" onClick={clearBehavior} className="rounded-full border-2 border-destructive text-destructive px-4 py-2 text-sm font-bold hover:bg-destructive/10">Clear scores</button>}
                   />
                   <DataRow
                     title="Reset entire app"
                     desc="Wipes schedule, settings, and behavior data, then restarts setup."
-                    action={<button type="button" onClick={resetApp} className="btn-danger">Reset app</button>}
+                    action={<button type="button" onClick={resetApp} className="rounded-full bg-destructive text-white px-4 py-2 text-sm font-bold hover:bg-destructive/90">Reset app</button>}
                   />
                 </TabsContent>
               </Tabs>
