@@ -204,6 +204,9 @@ function Index() {
                     periods={todaysPeriods}
                     currentPeriodId={currentPeriod?.id ?? null}
                     pastPeriodIds={past}
+                    behaviorScore={currentScore}
+                    onScoreChange={handleScore}
+                    showBehaviorRow={settings?.behaviorScoringEnabled ?? true}
                   />
                 )}
               </div>
