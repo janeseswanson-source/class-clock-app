@@ -91,6 +91,10 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
+      { name: "twitter:title", content: "Next Specials Timer" },
+      { name: "twitter:description", content: "Classroom wall display for specialist teachers: analog clock, countdown, daily schedule, and behavior scoring." },
+      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/e225c847-1505-4eea-9e9a-70e5063be8c2/id-preview-2c92c9d0--824e4b30-4453-4064-8864-96499d58c772.lovable.app-1784683826321.png" },
+      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/e225c847-1505-4eea-9e9a-70e5063be8c2/id-preview-2c92c9d0--824e4b30-4453-4064-8864-96499d58c772.lovable.app-1784683826321.png" },
     ],
     links: [
       { rel: "stylesheet", href: appCss },
