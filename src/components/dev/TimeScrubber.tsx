@@ -26,7 +26,12 @@ export function TimeScrubber() {
   const [, force] = useState(0);
   const [open, setOpen] = useState(false);
 
-  useEffect(() => devClock.subscribe(() => force((n) => n + 1)), []);
+  useEffect(() => {
+    const unsub = devClock.subscribe(() => force((n) => n + 1));
+    return () => {
+      unsub();
+    };
+  }, []);
   useEffect(() => {
     const id = window.setInterval(() => force((n) => n + 1), 500);
     return () => window.clearInterval(id);
