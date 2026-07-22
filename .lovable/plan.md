@@ -1,54 +1,95 @@
-## Phase 2 — Live clock, countdown, flip animation, clean-up state, alarm
 
-Make the display run against real time. Keep the mock schedule from Phase 1 as the data source (Phase 3 replaces it with localStorage).
+# Phase 3 — Setup Wizard
 
-### Time engine
-- New `src/hooks/useNow.ts`: returns the current `Date`, updating every ~250ms via `setInterval`. Includes an optional dev time-offset so scrubbing works without touching real system time.
-- New `src/lib/time.ts`: pure helpers — `parseHHMM`, `minutesFromMidnight(date)`, `findCurrentPeriod(periods, now)`, `nextPeriod(periods, now)`, `remainingMs(periodEnd, now)`. All operate on the mock Friday schedule for now; when the real day-of-week has no periods, fall back to Friday so the demo remains meaningful in Phase 2.
-- New `src/lib/dev-clock.ts` (module singleton): holds an offset in ms. `useNow` reads it. Exposed globally as `window.__nsc` for the dev scrubber and unit poking.
+Goal: replace hard-coded mock data with a real, user-entered configuration captured through a multi-step wizard on first launch, stored locally (backend comes in Phase 5).
 
-### Scheduling / current-period logic
-- Component-level derivation in `src/routes/index.tsx`:
-  - `now = useNow()`
-  - Compute `currentPeriod`, `nextPeriod`, past IDs, remaining time.
-  - `transitionMs`: derived from mock settings (`sameGradeMin=5`, `gradeChangeMin=10`) by comparing `currentPeriod.grade` to `nextPeriod?.grade`. If next is recess/duty or grade differs, use grade-change window; else same-grade.
-  - Status label: `Class in session` when a class is active and not in clean-up window; `CLEAN UP TIME` inside the transition window; `PERIOD ENDED` at zero for `alarmAutoOffSeconds`; `Between periods` when no period is active.
+## Flow
 
-### Live analog clock
-- `AnalogClock` already accepts h/m/s props — feed real values from `useNow`. No structural changes.
+```text
+/setup
+ ├─ Step 1  Welcome / your details        (subjectTitle, teacherName)
+ ├─ Step 2  Choose setup method           (manual | scheduler_ops)
+ ├─ Step 3a Manual schedule builder       (per weekday period list)
+ ├─ Step 3b Scheduler Ops import stub     (paste/upload → parsed preview)
+ ├─ Step 4  Review & confirm              (weekly grid preview)
+ └─ Done → redirect to "/"
+```
 
-### Countdown stand with mechanical flip
-- `CountdownStand` becomes live and animates.
-  - Hours and minutes digits flip via a real CSS 3D flip on value change.
-  - Seconds render flat/instant — explicitly no flip (per brief, ghosting bug).
-  - Implementation: a small `FlipDigit` component (each digit) that keeps `prev` and `current`, triggers a `.flipping` class on change for ~450ms, then swaps. Uses `perspective`, two stacked halves (top/bottom) with `rotateX`. Seconds use a plain `<div>` — no wrapper.
-  - New keyframes added to `src/styles.css` (`@keyframes flip-top` / `flip-bottom`) since Tailwind's built-in animations don't cover this.
-- Clean-up flash: when `remaining <= transitionMs` and `remaining > 0` and current is a class period, the digit cells switch to a soft coral background and label reads `CLEAN UP TIME` (gold → coral). Pass an `intent: "normal" | "cleanup" | "ended"` prop to `CountdownStand`.
-- Period ended: at zero, label reads `PERIOD ENDED`, digits show `00:00:00`, cells go navy-tinted.
+The wall display (`/`) checks for a saved config on mount. If none exists, it redirects to `/setup`. Otherwise it renders using the stored schedule + settings instead of `mock-schedule.ts`.
 
-### Alarm
-- New `src/lib/alarm.ts`: uses Web Audio API to synthesize a short chime (no asset needed) — plays a 3-note motif then silences. Auto-stops after `alarmAutoOffSeconds` (default 6). No user interaction to stop.
-- Wired from `index.tsx` via a `useEffect` watching current-period id: when the previous current transitions to null/next (i.e., a class just ended), fire the alarm once. Track `lastEndedPeriodId` in a ref to avoid re-firing across renders.
+## Routes
 
-### Dev scrubber
-- New `src/components/dev/TimeScrubber.tsx`: fixed bottom-right panel, only rendered when `import.meta.env.DEV`. Controls:
-  - Buttons: `−1h`, `−5m`, `−30s`, `Now`, `+30s`, `+5m`, `+1h`.
-  - Text: current simulated time + offset readout.
-  - Jump-to-period buttons: `Kinder start`, `1st clean-up`, `1st end` (fires alarm), `2nd start`.
-- Sets/reads the offset via `dev-clock`. Not shown in production build.
+- `src/routes/setup.tsx` — wizard layout route with `<Outlet />`, step indicator, Back/Next chrome.
+- `src/routes/setup.index.tsx` → Step 1 (details).
+- `src/routes/setup.method.tsx` → Step 2.
+- `src/routes/setup.manual.tsx` → Step 3a schedule builder.
+- `src/routes/setup.import.tsx` → Step 3b Scheduler Ops (stub; accepts pasted JSON/CSV and shows preview — real parser is future work).
+- `src/routes/setup.review.tsx` → Step 4 confirm + save.
+- `src/routes/index.tsx` — updated to consume saved config and redirect when missing.
 
-### Files
-- new: `src/hooks/useNow.ts`, `src/lib/time.ts`, `src/lib/dev-clock.ts`, `src/lib/alarm.ts`, `src/components/dev/TimeScrubber.tsx`, `src/components/display/FlipDigit.tsx`
-- edit: `src/components/display/CountdownStand.tsx` (accept `intent`, use `FlipDigit` for h/m, flat for s), `src/routes/index.tsx` (wire live state + scrubber + alarm effect), `src/styles.css` (flip keyframes + `.cleanup` cell color utility)
+Each route gets its own `head()` metadata.
 
-### Out of scope (later phases)
-- Persisting settings / schedule to localStorage (Phase 3).
-- Real alarm sound style selection (uses synthesized chime here; Phase 3 setup adds preview + choice; Phase 4 settings edits it).
-- Behavior score persistence across period boundaries (still component-local until Phase 3).
-- Rolling over to the next day / holidays (not in v1).
+## State & persistence
 
-### Technical notes
-- The flip animation is the classic split-flap: two absolutely-positioned halves per digit, top half rotates from 0→-90° with old value, bottom half rotates from 90°→0° with new value. `will-change: transform`, `backface-visibility: hidden`. Duration 400ms, ease-in for top, ease-out for bottom, so it looks mechanical.
-- Seconds render as a plain digit inside the same cell so the visual grid stays uniform.
-- `useNow` uses `setInterval(250)` so seconds update visibly and flip triggers on minute change are captured within a frame of the boundary.
-- Alarm uses `AudioContext` created on first user gesture-fallback: attempt on demand; if `state === "suspended"`, still schedule the stop timeout so `PERIOD ENDED` label lifecycle is correct even when audio is blocked.
+- `src/lib/config-store.ts` — typed localStorage adapter with:
+  - `loadConfig()` / `saveConfig()` / `clearConfig()`
+  - Shape: `{ instance: TimerInstance, schedule: SchedulePeriod[], settings: TimerSettings, version: 1 }`
+  - Default `TimerSettings` values (from `types.ts`).
+- `src/hooks/useConfig.ts` — React hook exposing `{ config, isLoaded, save, clear }` backed by the store; subscribes to `storage` events so all tabs stay in sync.
+- `src/lib/wizard-store.ts` — small in-memory (sessionStorage-backed) draft store for the wizard so partial progress survives step navigation and refresh but doesn't pollute production config until Step 4 confirms.
+
+## Manual schedule builder (Step 3a)
+
+- Weekday tabs (Mon–Fri).
+- For each day, an ordered list of period rows with fields:
+  - Start / End time (time inputs)
+  - Type: `class | duty | recess`
+  - If `class`: grade (dropdown K–5), classroomTeacher (text), roomNumber (optional text)
+  - If `duty` / `recess`: dutyLabel (text, e.g. "Bus Duty")
+- Add / duplicate / delete row. Sort by startTime on blur.
+- Client-side validation: non-overlapping times, end > start, at least one period per active day.
+- "Copy from Monday" quick action for other weekdays.
+
+## Scheduler Ops import (Step 3b)
+
+Phase-3 stub only:
+- Textarea accepting pasted JSON matching `SchedulePeriod[]` (documented sample shown inline).
+- Optional `.csv` file input parsed client-side.
+- Parsed rows land in the same weekly grid preview as manual, editable before Step 4.
+- Full third-party integration deferred to Phase 5.
+
+## Review & save (Step 4)
+
+- Read-only weekly grid: 5 columns, each column lists periods with time + label + teacher.
+- Editable name/teacher summary at top with "Back to edit" links.
+- "Save & start timer" → writes to `config-store`, clears wizard draft, `router.navigate({ to: "/" })`.
+
+## Display integration
+
+- `src/routes/index.tsx`:
+  - Uses `useConfig()`; if not loaded → spinner; if empty → `<Navigate to="/setup" />`.
+  - Passes `config.schedule` into the existing Phase-2 period logic (currently reads `mock-schedule.ts`; extract that read to a single source so we swap it in one place).
+- `src/lib/mock-schedule.ts` stays as fallback used only in Storybook-style dev preview (not referenced by `/` anymore).
+- `DisplayHeader` shows `config.instance.subjectTitle` and `config.instance.teacherName` from real data.
+
+## Components (new, under `src/components/setup/`)
+
+- `WizardShell.tsx` — step indicator, Back/Next buttons, progress dots styled with navy/gold tokens.
+- `DetailsForm.tsx`, `MethodPicker.tsx` (two large cards Manual vs Scheduler Ops), `ScheduleDayEditor.tsx`, `PeriodRow.tsx`, `ImportPanel.tsx`, `WeekPreview.tsx`.
+- All styled via existing design tokens; no hardcoded colors.
+
+## Out of scope for Phase 3
+
+- Editing config after initial save (Phase 4 Settings).
+- Behavior report persistence (Phase 4).
+- Real Scheduler Ops API (Phase 5).
+- Auth / cloud sync (Phase 5).
+
+## Acceptance
+
+1. Fresh load with empty storage → redirected to `/setup` Step 1.
+2. Completing the manual path saves a full weekly schedule and returns to `/` showing today's real periods driven by Phase-2 logic.
+3. Reloading `/` after save skips the wizard.
+4. `localStorage.clear()` + reload returns to the wizard.
+5. Scheduler Ops path accepts a pasted JSON sample and produces the same reviewable grid.
+
