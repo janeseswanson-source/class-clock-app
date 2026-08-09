@@ -6,6 +6,8 @@ interface BehaviorScoreRowProps {
   onChange?: (score: BehaviorScore) => void;
   disabled?: boolean;
   hint?: string;
+  /** Smaller buttons, for finished periods scored after the fact. */
+  compact?: boolean;
 }
 
 export function BehaviorScoreRow({
@@ -13,6 +15,7 @@ export function BehaviorScoreRow({
   onChange,
   disabled = false,
   hint = "Tap to score this class",
+  compact = false,
 }: BehaviorScoreRowProps) {
   const label = value ? RATING_LABELS[value] : null;
 
@@ -26,13 +29,16 @@ export function BehaviorScoreRow({
               key={n}
               type="button"
               disabled={disabled}
+              aria-pressed={selected}
+              aria-label={`${n} — ${RATING_LABELS[n as BehaviorScore]}`}
               onClick={() => onChange?.(n as BehaviorScore)}
               className={cn(
-                "py-2 rounded-md text-sm font-semibold transition-colors",
+                "rounded-md font-semibold transition-colors",
+                compact ? "py-1 text-xs" : "py-2 text-sm",
                 selected
                   ? "bg-gold text-white shadow-sm"
                   : "bg-muted text-navy hover:bg-gold-soft",
-                disabled && "opacity-50 cursor-not-allowed",
+                disabled && "cursor-not-allowed opacity-50",
               )}
             >
               {n}
@@ -40,7 +46,12 @@ export function BehaviorScoreRow({
           );
         })}
       </div>
-      <div className="mt-2 text-center text-xs font-semibold text-navy">
+      <div
+        className={cn(
+          "mt-2 text-center font-semibold text-navy",
+          compact ? "text-[11px]" : "text-xs",
+        )}
+      >
         {label ? (
           <span>
             <span className="text-gold">{value}</span> {label}

@@ -1,4 +1,4 @@
-import { useCallback, useEffect } from "react";
+import { useCallback, useEffect, useMemo } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import {
@@ -85,10 +85,15 @@ export function useConfig() {
   }, [query.isSuccess, query.isFetching, query.data?.configured]);
 
   const server = query.data;
-  const config: UIConfig | null =
-    server?.configured
-      ? { instance: server.instance, schedule: server.schedule, settings: server.settings }
-      : null;
+  // Memoised so the display's per-second tick doesn't invalidate every
+  // downstream useMemo through a fresh object identity.
+  const config = useMemo<UIConfig | null>(
+    () =>
+      server?.configured
+        ? { instance: server.instance, schedule: server.schedule, settings: server.settings }
+        : null,
+    [server],
+  );
 
   const save = useCallback(
     (cfg: UIConfig) => saveMutation.mutateAsync(cfg),

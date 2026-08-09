@@ -1,6 +1,7 @@
 import { createFileRoute, Link, Navigate, useNavigate } from "@tanstack/react-router";
-import { ArrowLeft } from "lucide-react";
+import { AlertTriangle, ArrowLeft } from "lucide-react";
 import { useState, useEffect } from "react";
+import { toast } from "sonner";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { GeneralTab } from "@/components/settings/GeneralTab";
 import { DetailsForm } from "@/components/setup/DetailsForm";
@@ -10,6 +11,7 @@ import { useConfig } from "@/hooks/useConfig";
 import { useSessions } from "@/hooks/useSessions";
 import { DEFAULT_SETTINGS } from "@/lib/config-store";
 import { downloadBlob, toCSV } from "@/lib/csv";
+import { conflictsByDay } from "@/lib/schedule";
 import type { SchedulePeriod, TimerInstance, TimerSettings } from "@/lib/types";
 
 export const Route = createFileRoute("/_authenticated/settings")({
@@ -31,6 +33,7 @@ function SettingsPage() {
   // sessions currently retrieved through server clear; export uses session hook
   const { sessions } = useSessions();
 
+  const [saving, setSaving] = useState(false);
   const [draft, setDraft] = useState<{
     instance: TimerInstance;
     schedule: SchedulePeriod[];
@@ -58,7 +61,28 @@ function SettingsPage() {
       settings: config.settings ?? DEFAULT_SETTINGS,
     });
 
-  const handleSave = () => save(draft);
+  const conflicts = conflictsByDay(draft.schedule);
+  const blocked = conflicts.size > 0;
+
+  const handleSave = async () => {
+    if (blocked) {
+      toast.error("Fix the schedule conflicts first", {
+        description: "Overlapping periods are listed on the Schedule tab.",
+      });
+      return;
+    }
+    setSaving(true);
+    try {
+      await save(draft);
+      toast.success("Settings saved");
+    } catch (err) {
+      toast.error("Couldn't save your changes", {
+        description: err instanceof Error ? err.message : "Please try again.",
+      });
+    } finally {
+      setSaving(false);
+    }
+  };
 
   const exportAllCSV = () => {
     const rows = Object.values(sessions)
@@ -126,6 +150,10 @@ function SettingsPage() {
                   <ScheduleBuilder
                     periods={draft.schedule}
                     onChange={(schedule) => setDraft({ ...draft, schedule })}
+                    settings={draft.settings}
+                    onSettingsChange={(patch) =>
+                      setDraft({ ...draft, settings: { ...draft.settings, ...patch } })
+                    }
                   />
                   <div>
                     <div className="text-xs font-bold tracking-[0.2em] text-navy/60 mb-2">
@@ -176,7 +204,14 @@ function SettingsPage() {
       {dirty ? (
         <div className="fixed inset-x-0 bottom-4 flex justify-center px-4 z-50">
           <div className="rounded-full bg-navy text-white px-4 py-2 shadow-lg flex items-center gap-3">
-            <span className="text-sm">Unsaved changes</span>
+            {blocked ? (
+              <span className="inline-flex items-center gap-1.5 text-sm text-[oklch(0.85_0.12_25)]">
+                <AlertTriangle className="h-4 w-4" />
+                Schedule conflicts
+              </span>
+            ) : (
+              <span className="text-sm">Unsaved changes</span>
+            )}
             <button
               type="button"
               onClick={() => setDraft({
@@ -191,9 +226,10 @@ function SettingsPage() {
             <button
               type="button"
               onClick={handleSave}
-              className="rounded-full bg-gold text-navy px-3 py-1 text-xs font-bold hover:bg-gold/90"
+              disabled={saving || blocked}
+              className="rounded-full bg-gold text-navy px-3 py-1 text-xs font-bold hover:bg-gold/90 disabled:opacity-40"
             >
-              Save changes
+              {saving ? "Saving…" : "Save changes"}
             </button>
           </div>
         </div>

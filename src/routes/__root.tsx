@@ -10,6 +10,8 @@ import {
 import { useEffect, type ReactNode } from "react";
 
 import appCss from "../styles.css?url";
+import { Toaster } from "@/components/ui/sonner";
+import { installAudioUnlock } from "@/lib/alarm";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 
 function NotFoundComponent() {
@@ -131,6 +133,10 @@ function RootComponent() {
   const { queryClient } = Route.useRouteContext();
   const router = useRouter();
 
+  // Browsers won't let the alarm make a sound until the page has seen a user
+  // gesture, so the very first click anywhere primes the audio context.
+  useEffect(() => installAudioUnlock(), []);
+
   useEffect(() => {
     let mounted = true;
     let unsub: (() => void) | undefined;
@@ -153,6 +159,7 @@ function RootComponent() {
     <QueryClientProvider client={queryClient}>
       {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
       <Outlet />
+      <Toaster position="top-center" richColors closeButton />
     </QueryClientProvider>
   );
 }

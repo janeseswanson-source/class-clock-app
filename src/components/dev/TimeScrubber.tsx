@@ -1,5 +1,8 @@
 import { useEffect, useState } from "react";
 import { devClock } from "@/lib/dev-clock";
+import { cleanupMinutesFor, formatTime, toMinutes } from "@/lib/schedule";
+import { DEFAULT_SETTINGS } from "@/lib/config-store";
+import type { SchedulePeriod } from "@/lib/types";
 
 function fmt(d: Date) {
   return d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" });
@@ -22,7 +25,31 @@ function jumpTo(h: number, m: number) {
   devClock.setOffset(target.getTime() - Date.now());
 }
 
-export function TimeScrubber() {
+function jumpToMinutes(totalMinutes: number) {
+  jumpTo(Math.floor(totalMinutes / 60), totalMinutes % 60);
+}
+
+/**
+ * Jump targets built from the schedule that's actually loaded, so every
+ * boundary worth testing (clean-up, the bell) is one click away.
+ */
+function jumpTargets(periods: SchedulePeriod[]) {
+  const targets: Array<{ label: string; minutes: number }> = [];
+  for (const p of periods.slice(0, 3)) {
+    const name = p.periodType === "class" ? (p.grade ?? "Class") : (p.dutyLabel ?? p.periodType);
+    const start = toMinutes(p.startTime);
+    const end = toMinutes(p.endTime);
+    targets.push({ label: `${name} ${formatTime(p.startTime)}`, minutes: start });
+    const lead = cleanupMinutesFor(p, DEFAULT_SETTINGS);
+    if (lead > 0) {
+      targets.push({ label: `${name} clean-up`, minutes: end - lead });
+    }
+    targets.push({ label: `${name} bell`, minutes: end });
+  }
+  return targets.slice(0, 8);
+}
+
+export function TimeScrubber({ periods = [] }: { periods?: SchedulePeriod[] }) {
   const [, force] = useState(0);
   const [open, setOpen] = useState(false);
 
@@ -41,6 +68,7 @@ export function TimeScrubber() {
 
   const now = devClock.now();
   const off = devClock.getOffset();
+  const targets = jumpTargets(periods);
 
   return (
     <div className="fixed bottom-3 right-3 z-50 text-xs font-sans">
@@ -91,26 +119,22 @@ export function TimeScrubber() {
             Reset to real time
           </button>
           <div className="text-white/70 mb-1">Jump to</div>
-          <div className="grid grid-cols-2 gap-1">
-            <button onClick={() => jumpTo(8, 0)} className="rounded bg-white/10 hover:bg-white/20 py-1">
-              Kinder 8:00
-            </button>
-            <button onClick={() => jumpTo(8, 45)} className="rounded bg-white/10 hover:bg-white/20 py-1">
-              1st 8:45
-            </button>
-            <button onClick={() => jumpTo(9, 22)} className="rounded bg-white/10 hover:bg-white/20 py-1">
-              1st clean-up
-            </button>
-            <button onClick={() => jumpTo(9, 25)} className="rounded bg-white/10 hover:bg-white/20 py-1">
-              1st end (alarm)
-            </button>
-            <button onClick={() => jumpTo(9, 40)} className="rounded bg-white/10 hover:bg-white/20 py-1">
-              2nd 9:40
-            </button>
-            <button onClick={() => jumpTo(13, 0)} className="rounded bg-white/10 hover:bg-white/20 py-1">
-              5th 1:00 PM
-            </button>
-          </div>
+          {targets.length === 0 ? (
+            <div className="text-white/50">No periods scheduled today.</div>
+          ) : (
+            <div className="grid grid-cols-2 gap-1">
+              {targets.map((t) => (
+                <button
+                  key={t.label}
+                  onClick={() => jumpToMinutes(t.minutes)}
+                  className="truncate rounded bg-white/10 py-1 hover:bg-white/20"
+                  title={t.label}
+                >
+                  {t.label}
+                </button>
+              ))}
+            </div>
+          )}
         </div>
       )}
     </div>

@@ -21,6 +21,63 @@ function getCtx(): Ctx {
   return ctx;
 }
 
+/* ── autoplay unlock ──────────────────────────────────────────────────────
+ * Browsers refuse to start an AudioContext that has never seen a user gesture.
+ * A wall display gets loaded once and then left alone, so if the first thing to
+ * touch audio is the alarm itself, the alarm is silent for the whole day. These
+ * helpers unlock the context on the first interaction and let the UI prompt for
+ * one when it hasn't happened yet.
+ */
+
+const readyListeners = new Set<(ready: boolean) => void>();
+
+function notifyReady() {
+  const ready = isAudioReady();
+  readyListeners.forEach((l) => l(ready));
+}
+
+export function isAudioReady(): boolean {
+  return ctx !== null && ctx.state === "running";
+}
+
+export function onAudioReadyChange(listener: (ready: boolean) => void): () => void {
+  readyListeners.add(listener);
+  return () => readyListeners.delete(listener);
+}
+
+/** Starts (or resumes) the audio context. Must be called from a user gesture. */
+export async function unlockAudio(): Promise<boolean> {
+  const c = getCtx();
+  if (!c) return false;
+  try {
+    if (c.state === "suspended") await c.resume();
+    // A zero-length silent buffer is enough to satisfy iOS Safari.
+    const buffer = c.createBuffer(1, 1, c.sampleRate);
+    const source = c.createBufferSource();
+    source.buffer = buffer;
+    source.connect(c.destination);
+    source.start(0);
+  } catch {
+    /* ignore — reported through isAudioReady() */
+  }
+  notifyReady();
+  return isAudioReady();
+}
+
+/** Unlocks audio on the first pointer/key event anywhere in the app. */
+export function installAudioUnlock(): () => void {
+  if (typeof window === "undefined") return () => {};
+  const events = ["pointerdown", "keydown", "touchstart"] as const;
+  const handler = () => {
+    void unlockAudio().then((ok) => {
+      if (ok) remove();
+    });
+  };
+  const remove = () => events.forEach((e) => window.removeEventListener(e, handler));
+  events.forEach((e) => window.addEventListener(e, handler, { passive: true }));
+  return remove;
+}
+
 export function stopAlarm() {
   if (stopTimer !== null) {
     window.clearTimeout(stopTimer);
@@ -66,7 +123,9 @@ export function playAlarm(autoOffSeconds: number, style: AlarmStyle = "chime") {
   if (!c) return;
   stopAlarm();
   if (c.state === "suspended") {
-    c.resume().catch(() => {});
+    c.resume()
+      .then(notifyReady)
+      .catch(() => {});
   }
 
   const preset = PRESETS[style] ?? PRESETS.chime;

@@ -1,5 +1,6 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
+import { toast } from "sonner";
 import { WizardShell } from "@/components/setup/WizardShell";
 import { DetailsForm } from "@/components/setup/DetailsForm";
 import { MethodPicker } from "@/components/setup/MethodPicker";
@@ -8,7 +9,13 @@ import { ImportPanel } from "@/components/setup/ImportPanel";
 import { WeekPreview } from "@/components/setup/WeekPreview";
 import { useConfig } from "@/hooks/useConfig";
 import { DEFAULT_SETTINGS } from "@/lib/config-store";
-import type { SchedulePeriod, SetupMethod, TimerInstance } from "@/lib/types";
+import { conflictsByDay } from "@/lib/schedule";
+import type {
+  SchedulePeriod,
+  SetupMethod,
+  TimerInstance,
+  TimerSettings,
+} from "@/lib/types";
 
 export const Route = createFileRoute("/_authenticated/setup")({
   head: () => ({
@@ -50,21 +57,37 @@ function SetupWizard() {
     config?.instance.setupMethod ?? "manual",
   );
   const [schedule, setSchedule] = useState<SchedulePeriod[]>(config?.schedule ?? []);
+  const [settings, setSettings] = useState<TimerSettings>(
+    config?.settings ?? DEFAULT_SETTINGS,
+  );
+  const [saving, setSaving] = useState(false);
 
   const totalSteps = 4;
 
   const detailsValid =
     subjectTitle.trim().length > 0 && teacherName.trim().length > 0;
-  const scheduleValid = schedule.length > 0 &&
-    schedule.every((p) => p.endTime > p.startTime);
+  const conflicts = useMemo(() => conflictsByDay(schedule), [schedule]);
+  const scheduleValid = schedule.length > 0 && conflicts.size === 0;
 
   const handleSave = async () => {
-    await save({
-      instance: makeInstance(subjectTitle, teacherName, method),
-      schedule,
-      settings: config?.settings ?? DEFAULT_SETTINGS,
-    });
-    navigate({ to: "/" });
+    setSaving(true);
+    try {
+      await save({
+        instance: makeInstance(subjectTitle, teacherName, method),
+        schedule,
+        settings,
+      });
+      toast.success("Timer is ready", {
+        description: `${schedule.length} periods saved across the week.`,
+      });
+      navigate({ to: "/" });
+    } catch (err) {
+      toast.error("Couldn't save your schedule", {
+        description: err instanceof Error ? err.message : "Please try again.",
+      });
+    } finally {
+      setSaving(false);
+    }
   };
 
   const back = () => setStep((s) => Math.max(1, s - 1));
@@ -110,7 +133,7 @@ function SetupWizard() {
               : "Import from Scheduler Ops",
           subtitle:
             method === "manual"
-              ? "Add each period with its time and grade. Copy Monday to fill the rest of the week quickly."
+              ? "Set the time your day starts, generate your rotation, then fill in grades and teachers. Drag any block on the timeline to adjust it."
               : "Paste your export below, then adjust anything that needs a tweak.",
           nextLabel: "Review",
           nextDisabled: !scheduleValid,
@@ -118,7 +141,12 @@ function SetupWizard() {
           onBack: back,
           body:
             method === "manual" ? (
-              <ScheduleBuilder periods={schedule} onChange={setSchedule} />
+              <ScheduleBuilder
+                periods={schedule}
+                onChange={setSchedule}
+                settings={settings}
+                onSettingsChange={(patch) => setSettings((s) => ({ ...s, ...patch }))}
+              />
             ) : (
               <div className="space-y-6">
                 <ImportPanel onImport={setSchedule} count={schedule.length} />
@@ -127,7 +155,12 @@ function SetupWizard() {
                     <div className="text-xs font-bold tracking-[0.2em] text-navy/60 mb-2">
                       REFINE IMPORTED PERIODS
                     </div>
-                    <ScheduleBuilder periods={schedule} onChange={setSchedule} />
+                    <ScheduleBuilder
+                      periods={schedule}
+                      onChange={setSchedule}
+                      settings={settings}
+                      onSettingsChange={(patch) => setSettings((s) => ({ ...s, ...patch }))}
+                    />
                   </div>
                 ) : null}
               </div>
@@ -139,8 +172,8 @@ function SetupWizard() {
           title: "Review & save",
           subtitle:
             "Here's your full week. Save to start the timer, or go back to edit.",
-          nextLabel: "Save & start timer",
-          nextDisabled: !detailsValid || !scheduleValid,
+          nextLabel: saving ? "Saving…" : "Save & start timer",
+          nextDisabled: !detailsValid || !scheduleValid || saving,
           onNext: handleSave,
           onBack: back,
           body: (
@@ -162,13 +195,20 @@ function SetupWizard() {
                   Edit details
                 </button>
               </div>
+              <div className="rounded-2xl border-2 border-navy/10 p-4 text-sm text-navy/70">
+                <b className="text-navy">Clean-up alarm</b> rings{" "}
+                {settings.cleanupLeadMinutes} minutes before each class ends, and the
+                end-of-class alarm rings at the bell. Both auto-silence after{" "}
+                {settings.alarmAutoOffSeconds} seconds — you can change all of this,
+                or override a single class, in Settings.
+              </div>
               <WeekPreview periods={schedule} />
             </div>
           ),
         };
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [step, subjectTitle, teacherName, method, schedule, detailsValid, scheduleValid]);
+  }, [step, subjectTitle, teacherName, method, schedule, settings, saving, detailsValid, scheduleValid]);
 
   return (
     <WizardShell

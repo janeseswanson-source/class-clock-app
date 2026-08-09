@@ -37,11 +37,11 @@ export function CountdownStand({
   return (
     <div className="relative inline-block">
       <div className="absolute -top-3 left-1/2 -translate-x-1/2 w-24 h-3 bg-navy rounded-t-sm" />
-      <div className="rounded-2xl bg-white border-2 border-navy p-3 shadow-md">
-        <div className="rounded-xl border-2 border-gold px-5 py-4">
-          <div className="flex items-end gap-3">
+      <div className="rounded-2xl border-2 border-navy bg-white p-1.5 shadow-md md:p-3">
+        <div className="rounded-xl border-2 border-gold px-2 py-3 md:px-5 md:py-4">
+          <div className="flex items-end gap-1.5 md:gap-3">
             <div className="flex flex-col items-center">
-              <div className="flex gap-1.5">
+              <div className="flex gap-1 md:gap-1.5">
                 <FlipDigit value={hs[0]} intent={intent} />
                 <FlipDigit value={hs[1]} intent={intent} />
               </div>
@@ -49,9 +49,9 @@ export function CountdownStand({
                 HR
               </span>
             </div>
-            <span className="text-3xl md:text-5xl font-extrabold text-navy pb-6">:</span>
+            <span className="pb-5 text-xl font-extrabold text-navy md:pb-6 md:text-5xl">:</span>
             <div className="flex flex-col items-center">
-              <div className="flex gap-1.5">
+              <div className="flex gap-1 md:gap-1.5">
                 <FlipDigit value={ms[0]} intent={intent} />
                 <FlipDigit value={ms[1]} intent={intent} />
               </div>
@@ -59,9 +59,9 @@ export function CountdownStand({
                 MIN
               </span>
             </div>
-            <span className="text-3xl md:text-5xl font-extrabold text-navy pb-6">:</span>
+            <span className="pb-5 text-xl font-extrabold text-navy md:pb-6 md:text-5xl">:</span>
             <div className="flex flex-col items-center">
-              <div className="flex gap-1.5">
+              <div className="flex gap-1 md:gap-1.5">
                 <FlatDigit value={ss[0]} intent={intent} />
                 <FlatDigit value={ss[1]} intent={intent} />
               </div>
