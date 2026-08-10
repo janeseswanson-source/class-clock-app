@@ -8,6 +8,8 @@ export const MAX_WORKBOOK_TEXT_LENGTH = 400_000;
 export interface WorkbookText {
   text: string;
   warnings: string[];
+  /** Names of the non-empty sheets that were sent to the AI. */
+  sheets: string[];
 }
 
 export function workbookToText(base64: string): WorkbookText {
@@ -23,6 +25,7 @@ export function workbookToText(base64: string): WorkbookText {
 
   const warnings: string[] = [];
   const chunks: string[] = [];
+  const sheets: string[] = [];
   let used = 0;
 
   for (const name of workbook.SheetNames) {
@@ -31,6 +34,7 @@ export function workbookToText(base64: string): WorkbookText {
     const csv = XLSX.utils.sheet_to_csv(sheet, { blankrows: false, rawNumbers: false }).trim();
     if (!csv) continue;
     chunks.push(`=== Sheet: "${name}" ===\n${csv}`);
+    sheets.push(name);
     used += csv.length;
   }
 
@@ -47,5 +51,5 @@ export function workbookToText(base64: string): WorkbookText {
   }
   void used;
 
-  return { text, warnings };
+  return { text, warnings, sheets };
 }

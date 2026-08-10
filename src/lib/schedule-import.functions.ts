@@ -159,11 +159,12 @@ type FileContentBlock =
 async function contentBlockForFile(
   mimeType: (typeof SUPPORTED_MIME_TYPES)[number],
   base64: string,
-): Promise<{ block: FileContentBlock; warnings: string[] }> {
+): Promise<{ block: FileContentBlock; warnings: string[]; sheets: string[] }> {
   if (mimeType === "application/pdf") {
     return {
       block: { type: "document", source: { type: "base64", media_type: "application/pdf", data: base64 } },
       warnings: [],
+      sheets: [],
     };
   }
   if (mimeType.startsWith("image/")) {
@@ -173,16 +174,17 @@ async function contentBlockForFile(
         source: { type: "base64", media_type: mimeType as "image/png" | "image/jpeg" | "image/webp" | "image/gif", data: base64 },
       },
       warnings: [],
+      sheets: [],
     };
   }
   if (EXCEL_MIME_TYPES.includes(mimeType as (typeof EXCEL_MIME_TYPES)[number])) {
     const { workbookToText } = await import("@/lib/xlsx.server");
-    const { text, warnings } = workbookToText(base64);
-    return { block: { type: "text", text }, warnings };
+    const { text, warnings, sheets } = workbookToText(base64);
+    return { block: { type: "text", text }, warnings, sheets };
   }
   // text/csv, text/plain, text/tab-separated-values — inline as plain text.
   const text = Buffer.from(base64, "base64").toString("utf-8");
-  return { block: { type: "text", text }, warnings: [] };
+  return { block: { type: "text", text }, warnings: [], sheets: [] };
 }
 
 
@@ -218,7 +220,7 @@ function toSchedulePeriod(p: ExtractedPeriod): SchedulePeriod {
 export const analyzeScheduleFile = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) => inputSchema.parse(input))
-  .handler(async ({ data }): Promise<{ periods: SchedulePeriod[]; warnings: string[] }> => {
+  .handler(async ({ data }): Promise<{ periods: SchedulePeriod[]; warnings: string[]; sheets: string[] }> => {
     const { anthropicClient } = await import("@/lib/anthropic.server");
 
     const decodedLength = Math.ceil((data.dataBase64.length * 3) / 4);
@@ -226,7 +228,7 @@ export const analyzeScheduleFile = createServerFn({ method: "POST" })
       throw new Error("That file is too large — try a smaller file or a lower-resolution photo.");
     }
 
-    const { block: fileBlock, warnings: fileWarnings } = await contentBlockForFile(
+    const { block: fileBlock, warnings: fileWarnings, sheets } = await contentBlockForFile(
       data.mimeType,
       data.dataBase64,
     );
@@ -286,5 +288,6 @@ export const analyzeScheduleFile = createServerFn({ method: "POST" })
     return {
       periods: parsed.data.periods.map(toSchedulePeriod),
       warnings: [...fileWarnings, ...parsed.data.warnings],
+      sheets,
     };
   });
