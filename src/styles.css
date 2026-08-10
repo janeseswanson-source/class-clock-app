@@ -289,3 +289,19 @@
     box-shadow: 0 0 0 6px color-mix(in oklab, var(--coral) 0%, transparent);
   }
 }
+
+/* Readable minimum on phones: the wall display is tuned for a mounted TV, so
+   the smallest label sizes fall below comfortable reading size on a handset.
+   Desktop/TV sizing is untouched. */
+@media (max-width: 639px) {
+  .text-xs {
+    font-size: 0.8125rem;
+    line-height: 1.15rem;
+  }
+
+  .text-\[11px\],
+  .text-\[10px\] {
+    font-size: 0.75rem;
+    line-height: 1.05rem;
+  }
+}
