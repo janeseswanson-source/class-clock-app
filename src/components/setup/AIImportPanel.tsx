@@ -2,7 +2,8 @@ import { useRef, useState } from "react";
 import { AlertTriangle, FileUp, Loader2, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import { ImportPanel } from "./ImportPanel";
-import { useScheduleImport } from "@/hooks/useScheduleImport";
+import { ImportPreview } from "./ImportPreview";
+import { useScheduleImport, type ScheduleImportResult } from "@/hooks/useScheduleImport";
 import { SUPPORTED_MIME_TYPES, type SupportedMimeType } from "@/lib/schedule-import.functions";
 import type { SchedulePeriod } from "@/lib/types";
 import { cn } from "@/lib/utils";
@@ -49,12 +50,14 @@ export function AIImportPanel({ onImport, count }: AIImportPanelProps) {
   const { analyzeFile, isAnalyzing, error } = useScheduleImport();
   const [dragging, setDragging] = useState(false);
   const [warnings, setWarnings] = useState<string[]>([]);
+  const [pending, setPending] = useState<(ScheduleImportResult & { filename: string }) | null>(null);
   const [lastFilename, setLastFilename] = useState<string | null>(null);
   const [showFallback, setShowFallback] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
   const handleFile = async (file: File) => {
     setWarnings([]);
+    setPending(null);
     const mimeType = resolveMimeType(file);
     if (!mimeType) {
       toast.error("That file type isn't supported yet", {
@@ -66,11 +69,10 @@ export function AIImportPanel({ onImport, count }: AIImportPanelProps) {
     try {
       const dataBase64 = await readFileAsBase64(file);
       const result = await analyzeFile({ filename: file.name, mimeType, dataBase64 });
-      setLastFilename(file.name);
       setWarnings(result.warnings);
-      onImport(result.periods);
+      setPending({ ...result, filename: file.name });
       toast.success(`Found ${result.periods.length} period${result.periods.length === 1 ? "" : "s"}`, {
-        description: "Review everything below before saving.",
+        description: "Review the rows below, then confirm to add them.",
       });
     } catch {
       // Surfaced via the hook's `error` state below.
@@ -154,7 +156,27 @@ export function AIImportPanel({ onImport, count }: AIImportPanelProps) {
         </div>
       ) : null}
 
-      {count > 0 && lastFilename ? (
+      {pending ? (
+        <ImportPreview
+          filename={pending.filename}
+          sheets={pending.sheets}
+          periods={pending.periods}
+          onConfirm={() => {
+            onImport(pending.periods);
+            setLastFilename(pending.filename);
+            setPending(null);
+            toast.success("Added to your schedule", {
+              description: "You can still edit everything on the next step.",
+            });
+          }}
+          onDiscard={() => {
+            setPending(null);
+            setWarnings([]);
+          }}
+        />
+      ) : null}
+
+      {!pending && count > 0 && lastFilename ? (
         <div className="text-sm text-navy/70">
           Imported <b>{count}</b> period{count === 1 ? "" : "s"} from{" "}
           <span className="font-semibold">{lastFilename}</span>. Review on the next step.
