@@ -34,7 +34,7 @@ export function BehaviorScoreRow({
               onClick={() => onChange?.(n as BehaviorScore)}
               className={cn(
                 "rounded-md font-semibold transition-colors",
-                compact ? "py-1 text-xs" : "py-2 text-sm",
+                compact ? "min-h-9 text-sm md:min-h-0 md:py-1 md:text-xs" : "min-h-11 text-base md:min-h-0 md:py-2 md:text-sm",
                 selected
                   ? "bg-gold text-white shadow-sm"
                   : "bg-muted text-navy hover:bg-gold-soft",
@@ -49,7 +49,7 @@ export function BehaviorScoreRow({
       <div
         className={cn(
           "mt-2 text-center font-semibold text-navy",
-          compact ? "text-[11px]" : "text-xs",
+          compact ? "text-xs md:text-[11px]" : "text-sm md:text-xs",
         )}
       >
         {label ? (

@@ -54,8 +54,8 @@ export function ClassCard({
 
       <div
         className={cn(
-          "rounded-xl px-5 transition-all",
-          isPast ? "py-2.5" : "py-4",
+          "rounded-xl px-4 transition-all md:px-5",
+          isPast ? "py-3 md:py-2.5" : "py-4",
           period.periodType === "recess"
             ? isPast
               ? "border border-gold/40 bg-gold-soft/30"
@@ -72,17 +72,17 @@ export function ClassCard({
           // whole card would take the score buttons with it.
         )}
       >
-        <div className="flex items-baseline justify-between gap-3">
+        <div className="flex flex-col gap-1 sm:flex-row sm:items-baseline sm:justify-between sm:gap-3">
           <div
             className={cn(
               "font-bold tabular-nums",
-              isPast ? "text-xs text-past" : "text-sm text-navy",
+              isPast ? "text-sm text-past md:text-xs" : "text-base text-navy md:text-sm",
             )}
           >
             {formatRange(period)}
           </div>
           {isCurrent && cleanupAt ? (
-            <div className="inline-flex items-center gap-1 whitespace-nowrap text-xs font-bold text-navy/60">
+            <div className="inline-flex items-center gap-1 whitespace-nowrap text-sm font-bold text-navy/60 md:text-xs">
               <AlarmClock className="h-3 w-3" />
               Clean up <span className="tabular-nums">{cleanupAt}</span>
             </div>
@@ -93,10 +93,8 @@ export function ClassCard({
           className={cn(
             "mt-0.5 flex items-center gap-2 font-bold",
             isPast
-              ? "text-sm text-past"
-              : period.periodType === "class"
-                ? "text-[clamp(1.05rem,1.6vw,1.5rem)] text-navy"
-                : "text-[clamp(1.05rem,1.6vw,1.5rem)] text-navy",
+              ? "text-base text-past md:text-sm"
+              : "text-[clamp(1.15rem,1.6vw,1.5rem)] text-navy",
           )}
         >
           {!isPast && period.periodType === "recess" ? (
@@ -118,10 +116,10 @@ export function ClassCard({
                 className={cn(
                   "mt-0.5 font-bold",
                   isPast
-                    ? "text-sm text-past"
+                    ? "text-base text-past md:text-sm"
                     : isCurrent
-                      ? "text-[clamp(1.15rem,1.9vw,1.75rem)] text-[oklch(0.55_0.2_260)]"
-                      : "text-[clamp(1rem,1.5vw,1.35rem)] text-navy",
+                      ? "text-[clamp(1.3rem,1.9vw,1.75rem)] text-[oklch(0.55_0.2_260)]"
+                      : "text-[clamp(1.1rem,1.5vw,1.35rem)] text-navy",
                 )}
               >
                 {period.classroomTeacher}
@@ -129,13 +127,13 @@ export function ClassCard({
             ) : null}
             {period.roomNumber ? (
               <div
-                className={cn("mt-0.5", isPast ? "text-xs text-past" : "text-sm text-navy/60")}
+                className={cn("mt-0.5", isPast ? "text-sm text-past md:text-xs" : "text-base text-navy/60 md:text-sm")}
               >
                 {period.roomNumber}
               </div>
             ) : null}
             {period.note && !isPast ? (
-              <div className="mt-1 text-xs font-semibold text-navy/70">→ {period.note}</div>
+              <div className="mt-1 text-sm font-semibold text-navy/70 md:text-xs">→ {period.note}</div>
             ) : null}
           </>
         ) : null}

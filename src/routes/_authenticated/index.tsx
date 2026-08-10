@@ -167,16 +167,16 @@ function Index() {
         : "bg-gold-soft text-navy";
 
   return (
-    <div className={cn("min-h-screen bg-background font-sans", wallMode ? "p-0" : "p-4 md:p-8")}>
+    <div className={cn("min-h-screen bg-background font-sans", wallMode ? "p-0" : "p-2 sm:p-4 md:p-8")}>
       <div className={cn("mx-auto", wallMode ? "max-w-none" : "max-w-7xl")}>
-        <div className={cn("bg-gold", wallMode ? "p-0" : "rounded-3xl p-1.5")}>
-          <div className={cn("bg-background", wallMode ? "p-0" : "rounded-3xl p-1")}>
+        <div className={cn("bg-gold", wallMode ? "p-0" : "rounded-2xl p-1 sm:rounded-3xl sm:p-1.5")}>
+          <div className={cn("bg-background", wallMode ? "p-0" : "rounded-2xl p-0.5 sm:rounded-3xl sm:p-1")}>
             <div
               className={cn(
                 "border-navy bg-white",
                 wallMode
                   ? "min-h-screen border-0 p-5"
-                  : "rounded-3xl border-2 p-6 md:p-10",
+                  : "rounded-2xl border-2 p-4 sm:rounded-3xl sm:p-6 md:p-10",
               )}
             >
               <DisplayHeader
@@ -193,7 +193,7 @@ function Index() {
                 <button
                   type="button"
                   onClick={() => void unlockAudio()}
-                  className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl border-2 border-gold bg-gold-soft px-4 py-2.5 text-sm font-bold text-navy hover:bg-gold/40"
+                  className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl border-2 border-gold bg-gold-soft px-4 py-3 text-sm font-bold text-navy hover:bg-gold/40 md:py-2.5"
                 >
                   <Volume2 className="h-4 w-4" />
                   Tap once to turn on class alarms — your browser blocks sound until you do.
@@ -206,7 +206,7 @@ function Index() {
                   below that it would squeeze the schedule into a sliver. */}
               <div className="mt-6 grid gap-8 xl:grid-cols-[minmax(0,33rem)_minmax(0,1fr)] xl:items-start">
                 <div className="flex flex-col items-center xl:sticky xl:top-6">
-                  <div className="w-[min(20rem,70vw)] xl:w-[26rem]">
+                  <div className="w-[min(17rem,58vw)] sm:w-[min(20rem,60vw)] xl:w-[26rem]">
                     <AnalogClock
                       hours={now.getHours()}
                       minutes={now.getMinutes()}
@@ -223,18 +223,18 @@ function Index() {
                     />
                   </div>
 
-                  <div className={cn("mt-5 rounded-full px-6 py-2 text-sm font-bold", statusPillClass)}>
+                  <div className={cn("mt-5 rounded-full px-6 py-2 text-base font-bold md:text-sm", statusPillClass)}>
                     {statusLabel}
                   </div>
                 </div>
 
                 <div>
                   <div className="mb-3 flex items-baseline justify-between">
-                    <div className="text-xs font-bold tracking-[0.25em] text-navy/60">
+                    <div className="text-sm font-bold tracking-[0.2em] text-navy/60 md:text-xs md:tracking-[0.25em]">
                       TODAY'S CLASSES
                     </div>
                     {todaysPeriods.length > 0 ? (
-                      <div className="text-xs font-bold text-navy/40">
+                      <div className="text-sm font-bold text-navy/40 md:text-xs">
                         {todaysPeriods.length} periods
                       </div>
                     ) : null}
@@ -286,7 +286,7 @@ function EmptyDay({ schedule, todayDow }: { schedule: SchedulePeriod[]; todayDow
   }
 
   return (
-    <div className="rounded-2xl border-2 border-dashed border-navy/15 p-10 text-center">
+    <div className="rounded-2xl border-2 border-dashed border-navy/15 p-6 text-center md:p-10">
       <div className="text-lg font-bold text-navy">No classes today</div>
       {upcoming ? (
         <div className="mt-1 text-sm text-navy/60">

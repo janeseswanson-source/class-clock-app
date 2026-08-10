@@ -28,7 +28,7 @@ export function DisplayHeader({
   };
 
   return (
-    <div className="flex items-start justify-between gap-4">
+    <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
       <div className="text-navy">
         <div
           className="text-xl leading-tight tracking-tight md:text-2xl"
@@ -46,24 +46,24 @@ export function DisplayHeader({
         </div>
       </div>
 
-      <div className="flex items-start gap-3 text-right">
-        <div>
-          <h1 className="text-[clamp(2rem,4vw,3.75rem)] font-black uppercase leading-none tracking-tight text-navy">
+      <div className="flex items-start justify-between gap-3 sm:text-right">
+        <div className="min-w-0">
+          <h1 className="text-[clamp(2.25rem,4vw,3.75rem)] font-black uppercase leading-none tracking-tight text-navy">
             {subjectTitle}
           </h1>
-          <div className="mt-1 text-[clamp(0.9rem,1.3vw,1.25rem)] font-bold text-navy/70">
+          <div className="mt-1 text-[clamp(1.05rem,1.3vw,1.25rem)] font-bold text-navy/70">
             {teacherName}
           </div>
-          <div className="mt-0.5 text-sm text-navy/50">{dateLabel}</div>
+          <div className="mt-0.5 text-sm text-navy/50 md:text-sm">{dateLabel}</div>
         </div>
 
-        <div className="flex items-center gap-1">
+        <div className="flex shrink-0 items-center gap-1">
           <button
             type="button"
             onClick={onToggleWallMode}
             aria-label={wallMode ? "Exit wall mode" : "Wall mode (fullscreen)"}
             title={wallMode ? "Exit wall mode" : "Wall mode (fullscreen)"}
-            className="rounded-full p-2 text-navy/60 transition-colors hover:bg-muted hover:text-navy"
+            className="hidden shrink-0 place-items-center rounded-full text-navy/60 transition-colors hover:bg-muted hover:text-navy md:grid md:h-9 md:w-9"
           >
             {wallMode ? <Minimize2 className="h-5 w-5" /> : <Maximize2 className="h-5 w-5" />}
           </button>
@@ -75,7 +75,7 @@ export function DisplayHeader({
                 search={{ range: "week" as const }}
                 aria-label="Behavior reports"
                 title="Behavior reports"
-                className="rounded-full p-2 text-navy/60 transition-colors hover:bg-muted hover:text-navy"
+                className="grid h-11 w-11 shrink-0 place-items-center rounded-full text-navy/60 transition-colors hover:bg-muted hover:text-navy md:h-9 md:w-9"
               >
                 <BarChart3 className="h-5 w-5" />
               </Link>
@@ -83,7 +83,7 @@ export function DisplayHeader({
                 to="/settings"
                 aria-label="Settings"
                 title="Settings"
-                className="rounded-full p-2 text-navy/60 transition-colors hover:bg-muted hover:text-navy"
+                className="grid h-11 w-11 shrink-0 place-items-center rounded-full text-navy/60 transition-colors hover:bg-muted hover:text-navy md:h-9 md:w-9"
               >
                 <Settings className="h-5 w-5" />
               </Link>
@@ -92,7 +92,7 @@ export function DisplayHeader({
                 onClick={handleSignOut}
                 aria-label="Sign out"
                 title="Sign out"
-                className="rounded-full p-2 text-navy/60 transition-colors hover:bg-muted hover:text-navy"
+                className="grid h-11 w-11 shrink-0 place-items-center rounded-full text-navy/60 transition-colors hover:bg-muted hover:text-navy md:h-9 md:w-9"
               >
                 <LogOut className="h-5 w-5" />
               </button>
