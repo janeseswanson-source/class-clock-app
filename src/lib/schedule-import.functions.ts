@@ -137,25 +137,40 @@ If a row is ambiguous, make your best judgment call and add a one-line explanati
 rather than guessing silently. If the file doesn't look like a class schedule at all, return an
 empty "periods" array and explain why in "warnings".`;
 
-function contentBlockForFile(
+type FileContentBlock =
+  | { type: "document"; source: { type: "base64"; media_type: "application/pdf"; data: string } }
+  | { type: "image"; source: { type: "base64"; media_type: "image/png" | "image/jpeg" | "image/webp" | "image/gif"; data: string } }
+  | { type: "text"; text: string };
+
+async function contentBlockForFile(
   mimeType: (typeof SUPPORTED_MIME_TYPES)[number],
   base64: string,
-): { type: "document"; source: { type: "base64"; media_type: "application/pdf"; data: string } }
-  | { type: "image"; source: { type: "base64"; media_type: "image/png" | "image/jpeg" | "image/webp" | "image/gif"; data: string } }
-  | { type: "text"; text: string } {
+): Promise<{ block: FileContentBlock; warnings: string[] }> {
   if (mimeType === "application/pdf") {
-    return { type: "document", source: { type: "base64", media_type: "application/pdf", data: base64 } };
+    return {
+      block: { type: "document", source: { type: "base64", media_type: "application/pdf", data: base64 } },
+      warnings: [],
+    };
   }
   if (mimeType.startsWith("image/")) {
     return {
-      type: "image",
-      source: { type: "base64", media_type: mimeType as "image/png" | "image/jpeg" | "image/webp" | "image/gif", data: base64 },
+      block: {
+        type: "image",
+        source: { type: "base64", media_type: mimeType as "image/png" | "image/jpeg" | "image/webp" | "image/gif", data: base64 },
+      },
+      warnings: [],
     };
+  }
+  if (EXCEL_MIME_TYPES.includes(mimeType as (typeof EXCEL_MIME_TYPES)[number])) {
+    const { workbookToText } = await import("@/lib/xlsx.server");
+    const { text, warnings } = workbookToText(base64);
+    return { block: { type: "text", text }, warnings };
   }
   // text/csv, text/plain, text/tab-separated-values — inline as plain text.
   const text = Buffer.from(base64, "base64").toString("utf-8");
-  return { type: "text", text };
+  return { block: { type: "text", text }, warnings: [] };
 }
+
 
 function toSchedulePeriod(p: ExtractedPeriod): SchedulePeriod {
   const dayOfWeek = DAYS.find((d) => d.label === p.day)?.id ?? 1;
