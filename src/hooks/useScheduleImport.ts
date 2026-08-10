@@ -7,6 +7,8 @@ import type { SchedulePeriod } from "@/lib/types";
 export interface ScheduleImportResult {
   periods: SchedulePeriod[];
   warnings: string[];
+  /** Spreadsheet tabs that were read (empty for non-Excel files). */
+  sheets: string[];
 }
 
 export interface ScheduleImportInput {
