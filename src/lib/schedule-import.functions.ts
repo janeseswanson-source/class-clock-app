@@ -11,6 +11,11 @@ import type Anthropic from "@anthropic-ai/sdk";
 // PDFs) so a phone photo or a multi-page export can't run away with tokens.
 const MAX_BASE64_LENGTH = 11_000_000; // ~8MB decoded
 
+export const EXCEL_MIME_TYPES = [
+  "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+  "application/vnd.ms-excel",
+] as const;
+
 export const SUPPORTED_MIME_TYPES = [
   "text/csv",
   "text/plain",
@@ -20,7 +25,9 @@ export const SUPPORTED_MIME_TYPES = [
   "image/jpeg",
   "image/webp",
   "image/gif",
+  ...EXCEL_MIME_TYPES,
 ] as const;
+
 
 export type SupportedMimeType = (typeof SUPPORTED_MIME_TYPES)[number];
 
