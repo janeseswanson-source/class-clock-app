@@ -38,7 +38,7 @@ export function CountdownStand({
     <div className="relative w-full md:inline-block md:w-auto">
       <div className="absolute -top-3 left-1/2 -translate-x-1/2 w-24 h-3 bg-navy rounded-t-sm" />
       <div className="rounded-2xl border-2 border-navy bg-white p-2 shadow-md md:p-3">
-        <div className="rounded-xl border-2 border-gold px-2 py-3 md:px-5 md:py-4">
+        <div className="rounded-xl border-2 border-gold px-1.5 py-3 md:px-5 md:py-4">
           <div className="flex items-end justify-center gap-1.5 md:gap-3">
             <div className="flex flex-col items-center">
               <div className="flex gap-1 md:gap-1.5">
