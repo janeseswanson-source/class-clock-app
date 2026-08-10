@@ -278,6 +278,6 @@ export const analyzeScheduleFile = createServerFn({ method: "POST" })
 
     return {
       periods: parsed.data.periods.map(toSchedulePeriod),
-      warnings: parsed.data.warnings,
+      warnings: [...fileWarnings, ...parsed.data.warnings],
     };
   });
