@@ -5,7 +5,7 @@ import { WizardShell } from "@/components/setup/WizardShell";
 import { DetailsForm } from "@/components/setup/DetailsForm";
 import { MethodPicker } from "@/components/setup/MethodPicker";
 import { ScheduleBuilder } from "@/components/setup/ScheduleBuilder";
-import { ImportPanel } from "@/components/setup/ImportPanel";
+import { AIImportPanel } from "@/components/setup/AIImportPanel";
 import { WeekPreview } from "@/components/setup/WeekPreview";
 import { useConfig } from "@/hooks/useConfig";
 import { DEFAULT_SETTINGS } from "@/lib/config-store";
@@ -134,7 +134,7 @@ function SetupWizard() {
           subtitle:
             method === "manual"
               ? "Set the time your day starts, generate your rotation, then fill in grades and teachers. Drag any block on the timeline to adjust it."
-              : "Paste your export below, then adjust anything that needs a tweak.",
+              : "Upload whatever you have — we'll read it and fill in the schedule, then you can adjust anything that needs a tweak.",
           nextLabel: "Review",
           nextDisabled: !scheduleValid,
           onNext: () => setStep(4),
@@ -149,7 +149,7 @@ function SetupWizard() {
               />
             ) : (
               <div className="space-y-6">
-                <ImportPanel onImport={setSchedule} count={schedule.length} />
+                <AIImportPanel onImport={setSchedule} count={schedule.length} />
                 {schedule.length > 0 ? (
                   <div>
                     <div className="text-xs font-bold tracking-[0.2em] text-navy/60 mb-2">

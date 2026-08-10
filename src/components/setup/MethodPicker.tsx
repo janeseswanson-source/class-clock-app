@@ -1,5 +1,5 @@
 import type { SetupMethod } from "@/lib/types";
-import { CalendarDays, Upload } from "lucide-react";
+import { CalendarDays, Sparkles } from "lucide-react";
 
 interface MethodPickerProps {
   value: SetupMethod;
@@ -20,9 +20,9 @@ const OPTIONS: Array<{
   },
   {
     id: "scheduler_ops",
-    title: "Import from Scheduler Ops",
-    desc: "Paste an export from your school scheduler and we'll parse the periods.",
-    icon: Upload,
+    title: "Upload a file — AI reads it for you",
+    desc: "A CSV, PDF, plain text, or even a photo of a printed schedule — we'll extract the periods automatically.",
+    icon: Sparkles,
   },
 ];
 

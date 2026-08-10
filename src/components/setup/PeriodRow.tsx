@@ -117,32 +117,50 @@ export function PeriodRow({
       </div>
 
       {period.periodType === "class" ? (
-        <div className="mt-3 grid gap-2 md:grid-cols-3">
-          <select
-            aria-label="Grade"
-            value={period.grade ?? GRADES[0]}
-            onChange={(e) => onChange({ grade: e.target.value })}
-            className={inputClass}
-          >
-            {GRADES.map((g) => (
-              <option key={g}>{g}</option>
-            ))}
-          </select>
+        <div className="mt-3 space-y-2">
+          <div className="grid gap-2 md:grid-cols-4">
+            <select
+              aria-label="Grade"
+              value={period.grade ?? GRADES[0]}
+              onChange={(e) => onChange({ grade: e.target.value })}
+              className={inputClass}
+            >
+              {GRADES.map((g) => (
+                <option key={g}>{g}</option>
+              ))}
+            </select>
+            <input
+              type="text"
+              aria-label="Class name"
+              value={period.className ?? ""}
+              onChange={(e) => onChange({ className: e.target.value })}
+              placeholder="Class name (optional)"
+              className={inputClass}
+            />
+            <input
+              type="text"
+              aria-label="Classroom teacher"
+              value={period.classroomTeacher ?? ""}
+              onChange={(e) => onChange({ classroomTeacher: e.target.value })}
+              placeholder="Classroom teacher"
+              className={inputClass}
+            />
+            <input
+              type="text"
+              aria-label="Room number"
+              value={period.roomNumber ?? ""}
+              onChange={(e) => onChange({ roomNumber: e.target.value })}
+              placeholder="Room (optional)"
+              className={inputClass}
+            />
+          </div>
           <input
             type="text"
-            aria-label="Classroom teacher"
-            value={period.classroomTeacher ?? ""}
-            onChange={(e) => onChange({ classroomTeacher: e.target.value })}
-            placeholder="Classroom teacher"
-            className={inputClass}
-          />
-          <input
-            type="text"
-            aria-label="Room number"
-            value={period.roomNumber ?? ""}
-            onChange={(e) => onChange({ roomNumber: e.target.value })}
-            placeholder="Room (optional)"
-            className={inputClass}
+            aria-label="Note"
+            value={period.note ?? ""}
+            onChange={(e) => onChange({ note: e.target.value })}
+            placeholder="Note — e.g. pickup location, take to lunch (optional)"
+            className={cn(inputClass, "w-full")}
           />
         </div>
       ) : (

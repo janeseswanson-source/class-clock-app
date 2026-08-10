@@ -20,6 +20,10 @@ dist-ssr
 .wrangler/
 .dev.vars
 
+# Secrets — was previously committed with real keys; now local-only.
+# See .env.example for the variables this project needs.
+.env
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

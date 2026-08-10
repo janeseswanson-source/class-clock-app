@@ -30,6 +30,10 @@ export interface SchedulePeriod {
   // Per-period clean-up override, in minutes before endTime.
   // Nullish means "inherit settings.cleanupLeadMinutes".
   cleanupMinutes?: number | null;
+  // Homeroom/section label, distinct from grade — e.g. "Kinder A" vs "Kinder".
+  className?: string;
+  // Free-text, e.g. "Take to lunch after class" or a pickup location.
+  note?: string;
 }
 
 export type BehaviorScore = 1 | 2 | 3 | 4 | 5;

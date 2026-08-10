@@ -106,6 +106,9 @@ export function ClassCard({
             <ClipboardList className="h-4 w-4 text-navy/50" />
           ) : null}
           {title}
+          {isClass && period.className ? (
+            <span className="text-navy/50">· {period.className}</span>
+          ) : null}
         </div>
 
         {isClass ? (
@@ -130,6 +133,9 @@ export function ClassCard({
               >
                 {period.roomNumber}
               </div>
+            ) : null}
+            {period.note && !isPast ? (
+              <div className="mt-1 text-xs font-semibold text-navy/70">→ {period.note}</div>
             ) : null}
           </>
         ) : null}

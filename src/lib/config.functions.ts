@@ -74,6 +74,8 @@ const periodSchema = z.object({
   roomNumber: z.string().max(60).optional(),
   dutyLabel: z.string().max(120).optional(),
   cleanupMinutes: z.number().int().min(0).max(60).nullable().optional(),
+  className: z.string().max(60).optional(),
+  note: z.string().max(240).optional(),
 });
 
 const configSchema = z.object({

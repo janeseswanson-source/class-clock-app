@@ -37,7 +37,7 @@ export function WeekPreview({ periods }: { periods: SchedulePeriod[] }) {
                     </div>
                     <div className="text-navy/70">
                       {p.periodType === "class"
-                        ? `${p.grade ?? ""}${p.classroomTeacher ? ` · ${p.classroomTeacher}` : ""}`
+                        ? `${p.grade ?? ""}${p.className ? ` (${p.className})` : ""}${p.classroomTeacher ? ` · ${p.classroomTeacher}` : ""}`
                         : (p.dutyLabel ?? p.periodType)}
                     </div>
                   </div>
