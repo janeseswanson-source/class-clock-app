@@ -58,7 +58,7 @@ export function AIImportPanel({ onImport, count }: AIImportPanelProps) {
     const mimeType = resolveMimeType(file);
     if (!mimeType) {
       toast.error("That file type isn't supported yet", {
-        description: "Try a CSV, plain text, PDF, or a photo — export Excel/Word as CSV or PDF first.",
+        description: "Try Excel (.xlsx), Excel, CSV, plain text, PDF, or a photo of a printed schedule.",
       });
       return;
     }
@@ -128,7 +128,7 @@ export function AIImportPanel({ onImport, count }: AIImportPanelProps) {
               Drop a file here, or click to choose one
             </div>
             <div className="text-xs text-navy/60">
-              CSV, plain text, PDF, or a photo of a printed schedule
+              Excel, CSV, plain text, PDF, or a photo of a printed schedule
             </div>
           </div>
         )}
