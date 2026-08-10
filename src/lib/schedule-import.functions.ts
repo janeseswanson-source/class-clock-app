@@ -219,7 +219,11 @@ export const analyzeScheduleFile = createServerFn({ method: "POST" })
       throw new Error("That file is too large — try a smaller file or a lower-resolution photo.");
     }
 
-    const fileBlock = contentBlockForFile(data.mimeType, data.dataBase64);
+    const { block: fileBlock, warnings: fileWarnings } = await contentBlockForFile(
+      data.mimeType,
+      data.dataBase64,
+    );
+
 
     let response;
     try {
