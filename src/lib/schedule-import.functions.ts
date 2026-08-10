@@ -11,6 +11,11 @@ import type Anthropic from "@anthropic-ai/sdk";
 // PDFs) so a phone photo or a multi-page export can't run away with tokens.
 const MAX_BASE64_LENGTH = 11_000_000; // ~8MB decoded
 
+export const EXCEL_MIME_TYPES = [
+  "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+  "application/vnd.ms-excel",
+] as const;
+
 export const SUPPORTED_MIME_TYPES = [
   "text/csv",
   "text/plain",
@@ -20,7 +25,9 @@ export const SUPPORTED_MIME_TYPES = [
   "image/jpeg",
   "image/webp",
   "image/gif",
+  ...EXCEL_MIME_TYPES,
 ] as const;
+
 
 export type SupportedMimeType = (typeof SUPPORTED_MIME_TYPES)[number];
 
@@ -133,29 +140,51 @@ Return one entry per period (class, recess, or duty) across Monday-Friday. For e
 
 Fields that don't apply or aren't given in the file must be null, never omitted or empty string.
 
+Spreadsheet workbooks arrive as text split into tabs, each introduced by a line like
+=== Sheet: "Mon-Wed" ===. Read EVERY sheet: schedules are often split across tabs (one per day,
+per term, or per grade). Merge all schedule tabs into one weekly result, and de-duplicate rows
+that appear on more than one tab. Ignore tabs that aren't schedules (legends, rosters, notes,
+blank templates). In "warnings", state which sheets you used and which you skipped and why.
+
 If a row is ambiguous, make your best judgment call and add a one-line explanation to "warnings"
 rather than guessing silently. If the file doesn't look like a class schedule at all, return an
 empty "periods" array and explain why in "warnings".`;
 
-function contentBlockForFile(
+
+type FileContentBlock =
+  | { type: "document"; source: { type: "base64"; media_type: "application/pdf"; data: string } }
+  | { type: "image"; source: { type: "base64"; media_type: "image/png" | "image/jpeg" | "image/webp" | "image/gif"; data: string } }
+  | { type: "text"; text: string };
+
+async function contentBlockForFile(
   mimeType: (typeof SUPPORTED_MIME_TYPES)[number],
   base64: string,
-): { type: "document"; source: { type: "base64"; media_type: "application/pdf"; data: string } }
-  | { type: "image"; source: { type: "base64"; media_type: "image/png" | "image/jpeg" | "image/webp" | "image/gif"; data: string } }
-  | { type: "text"; text: string } {
+): Promise<{ block: FileContentBlock; warnings: string[] }> {
   if (mimeType === "application/pdf") {
-    return { type: "document", source: { type: "base64", media_type: "application/pdf", data: base64 } };
+    return {
+      block: { type: "document", source: { type: "base64", media_type: "application/pdf", data: base64 } },
+      warnings: [],
+    };
   }
   if (mimeType.startsWith("image/")) {
     return {
-      type: "image",
-      source: { type: "base64", media_type: mimeType as "image/png" | "image/jpeg" | "image/webp" | "image/gif", data: base64 },
+      block: {
+        type: "image",
+        source: { type: "base64", media_type: mimeType as "image/png" | "image/jpeg" | "image/webp" | "image/gif", data: base64 },
+      },
+      warnings: [],
     };
+  }
+  if (EXCEL_MIME_TYPES.includes(mimeType as (typeof EXCEL_MIME_TYPES)[number])) {
+    const { workbookToText } = await import("@/lib/xlsx.server");
+    const { text, warnings } = workbookToText(base64);
+    return { block: { type: "text", text }, warnings };
   }
   // text/csv, text/plain, text/tab-separated-values — inline as plain text.
   const text = Buffer.from(base64, "base64").toString("utf-8");
-  return { type: "text", text };
+  return { block: { type: "text", text }, warnings: [] };
 }
+
 
 function toSchedulePeriod(p: ExtractedPeriod): SchedulePeriod {
   const dayOfWeek = DAYS.find((d) => d.label === p.day)?.id ?? 1;
@@ -197,7 +226,11 @@ export const analyzeScheduleFile = createServerFn({ method: "POST" })
       throw new Error("That file is too large — try a smaller file or a lower-resolution photo.");
     }
 
-    const fileBlock = contentBlockForFile(data.mimeType, data.dataBase64);
+    const { block: fileBlock, warnings: fileWarnings } = await contentBlockForFile(
+      data.mimeType,
+      data.dataBase64,
+    );
+
 
     let response;
     try {
@@ -252,6 +285,6 @@ export const analyzeScheduleFile = createServerFn({ method: "POST" })
 
     return {
       periods: parsed.data.periods.map(toSchedulePeriod),
-      warnings: parsed.data.warnings,
+      warnings: [...fileWarnings, ...parsed.data.warnings],
     };
   });

@@ -12,21 +12,25 @@ interface AIImportPanelProps {
   count: number;
 }
 
-const ACCEPT = ".csv,.txt,.tsv,.pdf,image/*";
+const ACCEPT = ".csv,.txt,.tsv,.pdf,.xlsx,.xls,image/*";
 
 function isSupportedMimeType(value: string): value is SupportedMimeType {
   return (SUPPORTED_MIME_TYPES as readonly string[]).includes(value);
 }
 
-// Some browsers don't set a MIME type for .csv/.tsv — fall back to extension.
+// Some browsers don't set a MIME type for .csv/.tsv, and Excel MIME types vary
+// by OS/browser — fall back to the file extension.
 function resolveMimeType(file: File): SupportedMimeType | null {
-  if (isSupportedMimeType(file.type)) return file.type;
   const ext = file.name.toLowerCase().split(".").pop();
+  if (ext === "xlsx") return "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
+  if (ext === "xls") return "application/vnd.ms-excel";
+  if (isSupportedMimeType(file.type)) return file.type;
   if (ext === "csv") return "text/csv";
   if (ext === "tsv") return "text/tab-separated-values";
   if (ext === "txt") return "text/plain";
   return null;
 }
+
 
 function readFileAsBase64(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
@@ -54,7 +58,7 @@ export function AIImportPanel({ onImport, count }: AIImportPanelProps) {
     const mimeType = resolveMimeType(file);
     if (!mimeType) {
       toast.error("That file type isn't supported yet", {
-        description: "Try a CSV, plain text, PDF, or a photo — export Excel/Word as CSV or PDF first.",
+        description: "Try Excel (.xlsx), Excel, CSV, plain text, PDF, or a photo of a printed schedule.",
       });
       return;
     }
@@ -124,7 +128,7 @@ export function AIImportPanel({ onImport, count }: AIImportPanelProps) {
               Drop a file here, or click to choose one
             </div>
             <div className="text-xs text-navy/60">
-              CSV, plain text, PDF, or a photo of a printed schedule
+              Excel, CSV, plain text, PDF, or a photo of a printed schedule
             </div>
           </div>
         )}
