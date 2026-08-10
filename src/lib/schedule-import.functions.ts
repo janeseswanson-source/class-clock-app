@@ -140,9 +140,16 @@ Return one entry per period (class, recess, or duty) across Monday-Friday. For e
 
 Fields that don't apply or aren't given in the file must be null, never omitted or empty string.
 
+Spreadsheet workbooks arrive as text split into tabs, each introduced by a line like
+=== Sheet: "Mon-Wed" ===. Read EVERY sheet: schedules are often split across tabs (one per day,
+per term, or per grade). Merge all schedule tabs into one weekly result, and de-duplicate rows
+that appear on more than one tab. Ignore tabs that aren't schedules (legends, rosters, notes,
+blank templates). In "warnings", state which sheets you used and which you skipped and why.
+
 If a row is ambiguous, make your best judgment call and add a one-line explanation to "warnings"
 rather than guessing silently. If the file doesn't look like a class schedule at all, return an
 empty "periods" array and explain why in "warnings".`;
+
 
 type FileContentBlock =
   | { type: "document"; source: { type: "base64"; media_type: "application/pdf"; data: string } }
