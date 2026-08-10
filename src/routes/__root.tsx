@@ -43,15 +43,22 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
     reportLovableError(error, { boundary: "tanstack_root_error_component" });
   }, [error]);
 
+  // A missing backend URL/key can only mean the build shipped without its
+  // configuration — say so instead of showing a generic failure.
+  const isConfigError = /Missing Supabase environment variable/i.test(error?.message ?? "");
+
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
       <div className="max-w-md text-center">
         <h1 className="text-xl font-semibold tracking-tight text-foreground">
-          This page didn't load
+          {isConfigError ? "Backend configuration missing" : "This page didn't load"}
         </h1>
         <p className="mt-2 text-sm text-muted-foreground">
-          Something went wrong on our end. You can try refreshing or head back home.
+          {isConfigError
+            ? "This build was published without its backend URL and key, so it can't sign you in. Re-publish the app to fix it."
+            : "Something went wrong on our end. You can try refreshing or head back home."}
         </p>
+
         <div className="mt-6 flex flex-wrap justify-center gap-2">
           <button
             onClick={() => {
