@@ -146,8 +146,14 @@ per term, or per grade). Merge all schedule tabs into one weekly result, and de-
 that appear on more than one tab. Ignore tabs that aren't schedules (legends, rosters, notes,
 blank templates). In "warnings", state which sheets you used and which you skipped and why.
 
+The input may also be informal prose the teacher typed by hand rather than a table. Handle day
+names and abbreviations ("Mon", "Tues", "M/W/F"), day ranges like "Mon-Wed" (expand to every day
+in the range), 12-hour times with or without am/pm (assume a normal school day, 7am-4pm), and
+back-to-back phrasing like "then". If times are listed with no day at all, assume they repeat
+Monday-Friday and say so in "warnings". Record every assumption you make in "warnings".
+
 If a row is ambiguous, make your best judgment call and add a one-line explanation to "warnings"
-rather than guessing silently. If the file doesn't look like a class schedule at all, return an
+rather than guessing silently. If the input doesn't look like a class schedule at all, return an
 empty "periods" array and explain why in "warnings".`;
 
 

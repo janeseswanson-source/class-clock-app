@@ -46,8 +46,21 @@ function readFileAsBase64(file: File): Promise<string> {
   });
 }
 
+function textToBase64(text: string): string {
+  const bytes = new TextEncoder().encode(text);
+  let binary = "";
+  bytes.forEach((b) => {
+    binary += String.fromCharCode(b);
+  });
+  return btoa(binary);
+}
+
+const MAX_TYPED_CHARS = 20000;
+
 export function AIImportPanel({ onImport, count }: AIImportPanelProps) {
   const { analyzeFile, isAnalyzing, error } = useScheduleImport();
+  const [mode, setMode] = useState<"upload" | "type">("upload");
+  const [typed, setTyped] = useState("");
   const [dragging, setDragging] = useState(false);
   const [warnings, setWarnings] = useState<string[]>([]);
   const [pending, setPending] = useState<(ScheduleImportResult & { filename: string }) | null>(null);
@@ -55,22 +68,15 @@ export function AIImportPanel({ onImport, count }: AIImportPanelProps) {
   const [showFallback, setShowFallback] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  const handleFile = async (file: File) => {
-    setWarnings([]);
-    setPending(null);
-    const mimeType = resolveMimeType(file);
-    if (!mimeType) {
-      toast.error("That file type isn't supported yet", {
-        description: "Try Excel (.xlsx), Excel, CSV, plain text, PDF, or a photo of a printed schedule.",
-      });
-      return;
-    }
-
+  const runImport = async (
+    filename: string,
+    mimeType: SupportedMimeType,
+    dataBase64: string,
+  ) => {
     try {
-      const dataBase64 = await readFileAsBase64(file);
-      const result = await analyzeFile({ filename: file.name, mimeType, dataBase64 });
+      const result = await analyzeFile({ filename, mimeType, dataBase64 });
       setWarnings(result.warnings);
-      setPending({ ...result, filename: file.name });
+      setPending({ ...result, filename });
       toast.success(`Found ${result.periods.length} period${result.periods.length === 1 ? "" : "s"}`, {
         description: "Review the rows below, then confirm to add them.",
       });
@@ -79,8 +85,81 @@ export function AIImportPanel({ onImport, count }: AIImportPanelProps) {
     }
   };
 
+  const handleFile = async (file: File) => {
+    setWarnings([]);
+    setPending(null);
+    const mimeType = resolveMimeType(file);
+    if (!mimeType) {
+      toast.error("That file type isn't supported yet", {
+        description: "Try Excel (.xlsx), CSV, plain text, PDF, or a photo of a printed schedule.",
+      });
+      return;
+    }
+
+    const dataBase64 = await readFileAsBase64(file);
+    await runImport(file.name, mimeType, dataBase64);
+  };
+
+  const handleTyped = async () => {
+    const text = typed.trim();
+    if (!text) return;
+    setWarnings([]);
+    setPending(null);
+    await runImport("Typed schedule", "text/plain", textToBase64(text));
+  };
+
   return (
     <div className="space-y-4">
+      <div className="inline-flex rounded-xl border-2 border-navy/15 p-1">
+        {(["upload", "type"] as const).map((m) => (
+          <button
+            key={m}
+            type="button"
+            onClick={() => setMode(m)}
+            className={cn(
+              "rounded-lg px-4 py-2 text-sm font-bold transition-colors",
+              mode === m ? "bg-navy text-white" : "text-navy/70 hover:text-navy",
+            )}
+          >
+            {m === "upload" ? "Upload a file" : "Type it out"}
+          </button>
+        ))}
+      </div>
+
+      {mode === "type" ? (
+        <div className="space-y-3">
+          <textarea
+            value={typed}
+            onChange={(e) => setTyped(e.target.value.slice(0, MAX_TYPED_CHARS))}
+            rows={9}
+            placeholder={
+              "Mon 8:05-8:45 Grade 3 Ms. Ferguson room 12\nMon 8:50-9:30 Kinder A Mr. Diaz\nMon 9:30-9:45 recess duty\nTue-Thu same as Monday\nFri 1:00-1:40 Grade 5, take them to lunch after"
+            }
+            className="w-full rounded-2xl border-2 border-navy/15 bg-white p-4 text-sm text-navy outline-none placeholder:text-navy/35 focus:border-navy/40"
+          />
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <div className="text-xs text-navy/60">
+              Write it however you like — days, times, grades, teachers, rooms, duties.
+            </div>
+            <button
+              type="button"
+              onClick={() => void handleTyped()}
+              disabled={isAnalyzing || typed.trim().length === 0}
+              className="inline-flex items-center gap-2 rounded-xl bg-navy px-4 py-2 text-sm font-bold text-white transition-opacity disabled:opacity-40"
+            >
+              {isAnalyzing ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" /> Reading…
+                </>
+              ) : (
+                <>
+                  <Sparkles className="h-4 w-4" /> Read my schedule
+                </>
+              )}
+            </button>
+          </div>
+        </div>
+      ) : (
       <div
         onDragOver={(e) => {
           e.preventDefault();
@@ -135,6 +214,9 @@ export function AIImportPanel({ onImport, count }: AIImportPanelProps) {
           </div>
         )}
       </div>
+      )}
+
+
 
       {error ? (
         <div className="flex items-start gap-2 rounded-xl border-2 border-destructive/30 bg-destructive/5 px-4 py-3 text-sm text-destructive">
