@@ -214,6 +214,9 @@ export function AIImportPanel({ onImport, count }: AIImportPanelProps) {
           </div>
         )}
       </div>
+      )}
+
+
 
       {error ? (
         <div className="flex items-start gap-2 rounded-xl border-2 border-destructive/30 bg-destructive/5 px-4 py-3 text-sm text-destructive">
