@@ -20,8 +20,8 @@ const OPTIONS: Array<{
   },
   {
     id: "scheduler_ops",
-    title: "Upload a file — AI reads it for you",
-    desc: "A CSV, PDF, plain text, or even a photo of a printed schedule — we'll extract the periods automatically.",
+    title: "Upload or type it — AI reads it for you",
+    desc: "A CSV, Excel, PDF, a photo of a printed schedule — or just type it out in your own words and we'll extract the periods automatically.",
     icon: Sparkles,
   },
 ];
